@@ -1,0 +1,39 @@
+<section class="login-page">
+  <div class="login-panel">
+    <div>
+      <span class="eyebrow">Proyecto Desarrollo Web I</span>
+      <h1>Gestión administrativa y de caja</h1>
+      <p>Administra socios, puestos, servicios, cuentas por cobrar y recibos desde una sola aplicación.</p>
+      <ul class="feature-list">
+        <li>API REST protegida con JWT</li>
+        <li>Contraseñas cifradas con BCrypt</li>
+        <li>Persistencia MySQL y operaciones CRUD</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="login-card">
+    <span class="brand-mark large">SG</span>
+    <h2>Iniciar sesión</h2>
+    <p class="muted">Ingresa con el usuario registrado en la base de datos.</p>
+
+    @if (error()) {
+      <div class="alert error">{{ error() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Usuario
+        <input type="text" formControlName="usuario" autocomplete="username">
+      </label>
+      <label>
+        Contraseña
+        <input type="password" formControlName="password" autocomplete="current-password">
+      </label>
+      <button class="button primary full" type="submit" [disabled]="form.invalid || loading()">
+        {{ loading() ? 'Validando…' : 'Ingresar' }}
+      </button>
+    </form>
+    <p class="login-hint">Usuario inicial: <strong>admin</strong> · Clave: <strong>Admin123*</strong></p>
+  </div>
+</section>

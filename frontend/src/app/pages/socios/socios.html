@@ -1,0 +1,42 @@
+<section class="page-heading">
+  <div><span class="eyebrow">Catálogo</span><h1>Socios</h1><p>Administra la información principal de los asociados.</p></div>
+  <span class="record-count">{{ socios().length }} registros</span>
+</section>
+
+@if (error()) { <div class="alert error">{{ error() }}</div> }
+@if (message()) { <div class="alert success">{{ message() }}</div> }
+
+<section class="workspace-grid">
+  <article class="panel form-panel">
+    <div class="panel-heading"><div><span class="step-label">Formulario</span><h2>{{ editingId() === null ? 'Nuevo socio' : 'Editar socio' }}</h2></div></div>
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+      <label>Código<input formControlName="codigo" placeholder="SOC-001"></label>
+      <label>Etapa<select formControlName="etapa"><option [ngValue]="1">1</option><option [ngValue]="2">2</option><option [ngValue]="3">3</option></select></label>
+      <label>Nombres<input formControlName="nombres"></label>
+      <label>Apellidos<input formControlName="apellidos"></label>
+      <label>Acción<input formControlName="accion" placeholder="Titular"></label>
+      <label>Fecha de nacimiento<input type="date" formControlName="fechaNacimiento"></label>
+      <label class="checkbox-row full-column"><input type="checkbox" formControlName="activo"> Socio activo</label>
+      <div class="form-actions full-column">
+        <button class="button primary" type="submit" [disabled]="form.invalid">{{ editingId() === null ? 'Registrar' : 'Guardar cambios' }}</button>
+        @if (editingId() !== null) { <button class="button secondary" type="button" (click)="cancel()">Cancelar</button> }
+      </div>
+    </form>
+  </article>
+
+  <article class="panel table-panel">
+    <div class="panel-heading"><div><span class="step-label">Directorio</span><h2>Socios registrados</h2></div><button class="button ghost small" (click)="load()">Actualizar</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Código</th><th>Socio</th><th>Etapa</th><th>Acción</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          @for (socio of socios(); track socio.id) {
+            <tr><td><strong>{{ socio.codigo }}</strong></td><td>{{ socio.nombres }} {{ socio.apellidos }}</td><td>{{ socio.etapa }}</td><td>{{ socio.accion || '—' }}</td><td><span class="status" [class.inactive]="!socio.activo">{{ socio.activo ? 'Activo' : 'Inactivo' }}</span></td><td class="actions"><button class="link-button" (click)="edit(socio)">Editar</button><button class="link-button danger" (click)="remove(socio)">Eliminar</button></td></tr>
+          } @empty {
+            <tr><td colspan="6" class="empty-state">{{ loading() ? 'Cargando…' : 'No hay socios registrados.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

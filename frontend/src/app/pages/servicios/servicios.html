@@ -1,0 +1,20 @@
+<section class="page-heading"><div><span class="eyebrow">Facturación</span><h1>Servicios cobrables</h1><p>Configura los conceptos que generarán cuentas por cobrar.</p></div><span class="record-count">{{ items().length }} registros</span></section>
+@if (error()) { <div class="alert error">{{ error() }}</div> }
+@if (message()) { <div class="alert success">{{ message() }}</div> }
+<section class="workspace-grid">
+  <article class="panel form-panel"><div class="panel-heading"><div><span class="step-label">Formulario</span><h2>{{ editingId() === null ? 'Nuevo servicio' : 'Editar servicio' }}</h2></div></div>
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+      <label class="full-column">Nombre<input formControlName="nombre" placeholder="Mantenimiento mensual"></label>
+      <label>Recurrencia<select formControlName="recurrencia"><option value="UNICA">Única</option><option value="MENSUAL">Mensual</option><option value="TRIMESTRAL">Trimestral</option><option value="ANUAL">Anual</option></select></label>
+      <label>Costo<input type="number" min="0.01" step="0.01" formControlName="costo"></label>
+      <label>Moneda<select formControlName="moneda"><option value="PEN">PEN - Soles</option><option value="USD">USD - Dólares</option></select></label>
+      <label>Cargo a<select formControlName="cargoA"><option value="PUESTO">Puesto</option><option value="SOCIO">Socio (versión futura)</option></select></label>
+      <label class="checkbox-row"><input type="checkbox" formControlName="dependeConsumo"> Depende de consumo</label>
+      <label class="checkbox-row"><input type="checkbox" formControlName="activo"> Servicio activo</label>
+      <div class="form-actions full-column"><button class="button primary" [disabled]="form.invalid">{{ editingId() === null ? 'Registrar' : 'Guardar' }}</button>@if (editingId() !== null) { <button class="button secondary" type="button" (click)="cancel()">Cancelar</button> }</div>
+    </form>
+  </article>
+  <article class="panel table-panel"><div class="panel-heading"><div><span class="step-label">Catálogo</span><h2>Servicios registrados</h2></div></div><div class="table-wrap"><table><thead><tr><th>Servicio</th><th>Recurrencia</th><th>Costo</th><th>Cargo</th><th>Tipo</th><th></th></tr></thead><tbody>
+    @for (item of items(); track item.id) { <tr><td><strong>{{ item.nombre }}</strong></td><td>{{ item.recurrencia }}</td><td>{{ item.moneda }} {{ item.costo }}</td><td>{{ item.cargoA }}</td><td>{{ item.dependeConsumo ? 'Por consumo' : 'Fijo' }}</td><td class="actions"><button class="link-button" (click)="edit(item)">Editar</button><button class="link-button danger" (click)="remove(item)">Eliminar</button></td></tr> } @empty { <tr><td colspan="6" class="empty-state">No hay servicios registrados.</td></tr> }
+  </tbody></table></div></article>
+</section>

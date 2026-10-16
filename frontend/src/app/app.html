@@ -1,0 +1,30 @@
+@if (auth.user(); as user) {
+  <header class="topbar">
+    <a routerLink="/" class="brand">
+      <span class="brand-mark">SG</span>
+      <span>Sistema de Gestión</span>
+    </a>
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+      <a routerLink="/socios" routerLinkActive="active">Socios</a>
+      <a routerLink="/giros" routerLinkActive="active">Giros</a>
+      <a routerLink="/puestos" routerLinkActive="active">Puestos</a>
+      <a routerLink="/servicios" routerLinkActive="active">Servicios</a>
+      <a routerLink="/cuentas" routerLinkActive="active">Caja</a>
+      <a routerLink="/resumen" routerLinkActive="active">Resumen</a>
+      <a routerLink="/recibos" routerLinkActive="active">Recibos</a>
+      <a routerLink="/operaciones" routerLinkActive="active">Ingresos</a>
+      <a routerLink="/egresos" routerLinkActive="active">Egresos</a>
+      <a routerLink="/bancos" routerLinkActive="active">Bancos</a>
+      <a routerLink="/reportes" routerLinkActive="active">Reportes</a>
+    </nav>
+    <div class="user-area">
+      <span>{{ user.nombres }} · {{ user.rol }}</span>
+      <button type="button" class="button ghost small" (click)="logout()">Salir</button>
+    </div>
+  </header>
+}
+
+<main [class.app-shell]="auth.user() !== null">
+  <router-outlet />
+</main>

@@ -1,0 +1,16 @@
+<section class="page-heading"><div><span class="eyebrow">Catálogo</span><h1>Giros comerciales</h1><p>Clasifica la actividad económica de cada puesto.</p></div><span class="record-count">{{ items().length }} registros</span></section>
+@if (error()) { <div class="alert error">{{ error() }}</div> }
+@if (message()) { <div class="alert success">{{ message() }}</div> }
+<section class="workspace-grid compact-form">
+  <article class="panel form-panel"><div class="panel-heading"><div><span class="step-label">Formulario</span><h2>{{ editingId() === null ? 'Nuevo giro' : 'Editar giro' }}</h2></div></div>
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid single-column">
+      <label>Nombre<input formControlName="nombre" placeholder="Abarrotes"></label>
+      <label>Descripción<textarea formControlName="descripcion" rows="4"></textarea></label>
+      <label class="checkbox-row"><input type="checkbox" formControlName="activo"> Giro activo</label>
+      <div class="form-actions"><button class="button primary" [disabled]="form.invalid">{{ editingId() === null ? 'Registrar' : 'Guardar' }}</button>@if (editingId() !== null) { <button class="button secondary" type="button" (click)="cancel()">Cancelar</button> }</div>
+    </form>
+  </article>
+  <article class="panel table-panel"><div class="panel-heading"><div><span class="step-label">Catálogo</span><h2>Giros registrados</h2></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Descripción</th><th>Estado</th><th></th></tr></thead><tbody>
+    @for (item of items(); track item.id) { <tr><td><strong>{{ item.nombre }}</strong></td><td>{{ item.descripcion || '—' }}</td><td><span class="status" [class.inactive]="!item.activo">{{ item.activo ? 'Activo' : 'Inactivo' }}</span></td><td class="actions"><button class="link-button" (click)="edit(item)">Editar</button><button class="link-button danger" (click)="remove(item)">Eliminar</button></td></tr> } @empty { <tr><td colspan="4" class="empty-state">No hay giros registrados.</td></tr> }
+  </tbody></table></div></article>
+</section>

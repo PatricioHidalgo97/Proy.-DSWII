@@ -1,0 +1,44 @@
+<section class="page-heading"><div><span class="eyebrow">Operación de caja</span><h1>Cuentas por cobrar</h1><p>Cargos por puesto o socio, consumo, generación masiva y cobranza múltiple.</p></div><div class="metric"><span>Pendiente visible</span><strong>PEN {{ totalPending().toFixed(2) }}</strong></div></section>
+@if (error()) { <div class="alert error">{{ error() }}</div> }
+@if (message()) { <div class="alert success">{{ message() }}</div> }
+@if (lastReceipt(); as receipt) { <div class="receipt-banner"><div><span>Último recibo</span><strong>{{ receipt.correlativo }}</strong></div><div><span>Monto</span><strong>{{ receipt.monto }}</strong></div><div><span>Destino</span><strong>{{ receipt.cuentaCobrar ? accountTarget(receipt.cuentaCobrar) : receipt.depositante }}</strong></div></div> }
+
+<section class="workspace-grid">
+  <article class="panel form-panel"><div class="panel-heading"><div><span class="step-label">Nuevo cargo</span><h2>Generar cuentas</h2></div></div>
+    <form [formGroup]="form" (ngSubmit)="create()" class="form-grid">
+      <label>Modo<select formControlName="modo"><option value="INDIVIDUAL">Individual</option><option value="MASIVO">Masivo</option></select></label>
+      <label>Cargo a<select formControlName="destino" (change)="destinationChanged()"><option value="PUESTO">Puesto</option><option value="SOCIO">Socio</option></select></label>
+      <label>Período<input type="month" formControlName="periodo"></label>
+      <label>Servicio<select formControlName="servicioId"><option [ngValue]="0">Seleccione</option>@for (servicio of servicesForTarget(); track servicio.id) { <option [ngValue]="servicio.id">{{ servicio.nombre }} · {{ servicio.moneda }} {{ servicio.costo }}{{ servicio.dependeConsumo ? ' · Consumo' : '' }}</option> }</select></label>
+      <label>Monto (0 usa costo del servicio)<input type="number" min="0" step="0.01" formControlName="monto"></label>
+      @if (form.controls.modo.value === 'INDIVIDUAL') {
+        <label class="full-column">Destinatario<select formControlName="targetId"><option [ngValue]="0">Seleccione</option>@for (item of targets(); track item.id) { <option [ngValue]="item.id">{{ targetLabel(item) }}</option> }</select></label>
+        @if (selectedService()?.dependeConsumo) {
+          <label>Lectura inicial<input type="number" min="0" step="0.01" formControlName="lecturaInicial"></label>
+          <label>Lectura final<input type="number" min="0" step="0.01" formControlName="lecturaFinal"></label>
+          <label class="full-column">Costo unitario<input type="number" min="0.0001" step="0.0001" formControlName="costoUnitario"></label>
+        }
+      } @else {
+        @if (form.controls.destino.value === 'SOCIO') {
+          <label>Etapa (0 todas)<select formControlName="etapa"><option [ngValue]="0">Todas</option><option [ngValue]="1">Etapa 1</option><option [ngValue]="2">Etapa 2</option><option [ngValue]="3">Etapa 3</option></select></label>
+          <label class="checkbox-row"><input type="checkbox" formControlName="sociosUnicos"> Evitar nombres duplicados</label>
+        }
+        <div class="selection-box full-column"><strong>Selección (vacía = todos los activos)</strong>@for (item of targets(); track item.id) { <label class="checkbox-row"><input type="checkbox" [checked]="targetSelection().has(item.id)" (change)="toggleTarget(item.id, $any($event.target).checked)"> {{ targetLabel(item) }}</label> }</div>
+      }
+      <button class="button primary full-column" [disabled]="form.invalid">{{ form.controls.modo.value === 'MASIVO' ? 'Generar cuentas masivas' : 'Generar cuenta' }}</button>
+    </form>
+  </article>
+
+  <article class="panel table-panel"><div class="panel-heading"><div><span class="step-label">Cobranza</span><h2>Estado de cuentas</h2></div>
+    <form [formGroup]="filterForm" class="inline-filter wrap">
+      <select formControlName="tipo" (change)="filterForm.patchValue({targetId: 0}); load()"><option value="TODOS">Todos</option><option value="PUESTO">Por puesto</option><option value="SOCIO">Por socio</option></select>
+      @if (filterForm.controls.tipo.value === 'PUESTO') { <select formControlName="targetId" (change)="load()"><option [ngValue]="0">Todos los puestos</option>@for (item of puestos(); track item.id) { <option [ngValue]="item.id">Puesto {{ item.numero }}</option> }</select> }
+      @if (filterForm.controls.tipo.value === 'SOCIO') { <select formControlName="targetId" (change)="load()"><option [ngValue]="0">Todos los socios</option>@for (item of socios(); track item.id) { <option [ngValue]="item.id">{{ item.codigo }} · {{ item.nombres }}</option> }</select> }
+      <select formControlName="estado"><option value="TODOS">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="PAGADA">Pagadas</option><option value="EXONERADA">Exoneradas</option></select>
+    </form></div>
+    <div class="batch-bar"><label class="checkbox-row"><input type="checkbox" (change)="toggleAll($any($event.target).checked)"> Seleccionar pendientes visibles</label><span><strong>{{ selected().size }}</strong> cuentas · PEN <strong>{{ selectedTotal().toFixed(2) }}</strong></span><button class="button primary small" [disabled]="!selected().size" (click)="paySelected()">Pagar selección</button><button class="button secondary small" [disabled]="!selected().size" (click)="exonerateSelected()">Exonerar</button></div>
+    <div class="table-wrap"><table><thead><tr><th></th><th>Período</th><th>Destinatario</th><th>Servicio / consumo</th><th>Monto</th><th>Estado</th><th></th></tr></thead><tbody>
+      @for (cuenta of visible(); track cuenta.id) { <tr><td><input type="checkbox" [disabled]="cuenta.estado !== 'PENDIENTE'" [checked]="selected().has(cuenta.id)" (change)="toggleAccount(cuenta, $any($event.target).checked)"></td><td>{{ cuenta.periodo }}</td><td><strong>{{ accountTarget(cuenta) }}</strong></td><td>{{ cuenta.servicio.nombre }}@if (cuenta.lecturaInicial !== null) { <br><span class="muted">{{ cuenta.lecturaInicial }} → {{ cuenta.lecturaFinal }} × {{ cuenta.costoUnitario }}</span> }</td><td><strong>{{ cuenta.servicio.moneda }} {{ cuenta.monto }}</strong></td><td><span class="status" [class.paid]="cuenta.estado === 'PAGADA'" [class.exempt]="cuenta.estado === 'EXONERADA'">{{ cuenta.estado }}</span></td><td class="actions">@if (cuenta.estado === 'PENDIENTE') { <button class="button primary small" (click)="pay(cuenta)">Pagar</button><button class="link-button" (click)="exonerate(cuenta)">Exonerar</button> }</td></tr> } @empty { <tr><td colspan="7" class="empty-state">No hay cuentas para el filtro seleccionado.</td></tr> }
+    </tbody></table></div>
+  </article>
+</section>

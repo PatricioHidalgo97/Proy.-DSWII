@@ -1,0 +1,21 @@
+<section class="page-heading"><div><span class="eyebrow">Administración</span><h1>Puestos</h1><p>Relaciona cada local con su socio y actividad comercial.</p></div><span class="record-count">{{ items().length }} registros</span></section>
+@if (error()) { <div class="alert error">{{ error() }}</div> }
+@if (message()) { <div class="alert success">{{ message() }}</div> }
+<section class="workspace-grid">
+  <article class="panel form-panel"><div class="panel-heading"><div><span class="step-label">Formulario</span><h2>{{ editingId() === null ? 'Nuevo puesto' : 'Editar puesto' }}</h2></div></div>
+    @if (socios().length === 0 || giros().length === 0) { <div class="alert warning">Primero registra al menos un socio y un giro.</div> }
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+      <label>Número<input formControlName="numero" placeholder="P-101"></label>
+      <label>Inquilino<input formControlName="nombreInquilino"></label>
+      <label>Socio (opcional)<select formControlName="socioId"><option [ngValue]="0">Sin socio asignado</option>@for (socio of socios(); track socio.id) { <option [ngValue]="socio.id">{{ socio.codigo }} · {{ socio.nombres }} {{ socio.apellidos }}</option> }</select></label>
+      <label>Giro<select formControlName="giroId"><option [ngValue]="0">Seleccione</option>@for (giro of giros(); track giro.id) { <option [ngValue]="giro.id">{{ giro.nombre }}</option> }</select></label>
+      <label>Inicio<input type="date" formControlName="fechaInicio"></label>
+      <label>Fin<input type="date" formControlName="fechaFin"></label>
+      <label class="checkbox-row full-column"><input type="checkbox" formControlName="activo"> Puesto activo</label>
+      <div class="form-actions full-column"><button class="button primary" [disabled]="form.invalid">{{ editingId() === null ? 'Registrar' : 'Guardar' }}</button>@if (editingId() !== null) { <button class="button secondary" type="button" (click)="cancel()">Cancelar</button> }</div>
+    </form>
+  </article>
+  <article class="panel table-panel"><div class="panel-heading"><div><span class="step-label">Directorio</span><h2>Puestos registrados</h2></div></div><div class="table-wrap"><table><thead><tr><th>Número</th><th>Socio</th><th>Giro</th><th>Inquilino</th><th>Vigencia</th><th></th></tr></thead><tbody>
+    @for (item of items(); track item.id) { <tr><td><strong>{{ item.numero }}</strong></td><td>@if (item.socio) { {{ item.socio.nombres }} {{ item.socio.apellidos }} } @else { <span class="muted">Sin asignar</span> }</td><td>{{ item.giro.nombre }}</td><td>{{ item.nombreInquilino || '—' }}</td><td>{{ item.fechaInicio || '—' }} / {{ item.fechaFin || '—' }}</td><td class="actions"><button class="link-button" (click)="edit(item)">Editar</button><button class="link-button danger" (click)="remove(item)">Eliminar</button></td></tr> } @empty { <tr><td colspan="6" class="empty-state">No hay puestos registrados.</td></tr> }
+  </tbody></table></div></article>
+</section>

@@ -1,0 +1,3 @@
+com\cibertec\gestion\services\CuentaCobrarServiceTest.class
+com\cibertec\gestion\security\AuthIntegrationTest.class
+com\cibertec\gestion\repositories\SocioRepositoryTest.class
