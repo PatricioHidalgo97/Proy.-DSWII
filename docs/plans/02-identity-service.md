@@ -140,7 +140,8 @@ cambiar el contrato.
 - **Depende de:** T-02.
 - **Pasos:**
   1. Copiar la cadena del monolito y **eliminar** la configuración de CORS.
-  2. Permitir `POST /api/auth/login`, `OPTIONS /**` y las rutas de Swagger.
+  2. Permitir `POST /api/auth/login`, `OPTIONS /**`, las rutas de Swagger y
+     `/actuator/health` (ESP-13 §6).
   3. Exigir autenticación para el resto.
   4. Mantener los cuerpos 401 y 403 de ESP-05.
   5. No incluir reglas de catálogo ni de egresos: no existen en este servicio.
@@ -236,6 +237,7 @@ el plan se detiene.
 | CA-10 | El contrato está exportado | `docs/openapi/identity.json` con dos paths | ESP-08 §8 |
 | CA-11 | Las pruebas pasan | `mvn test` en verde | ESP-13 §5.1 |
 | CA-12 | El monolito sigue arrancando | Login directo en 9090 | ESP-11 §9 |
+| CA-13 | El health responde sin token y no abre el resto de Actuator | `GET /actuator/health` → 200 `{"status":"UP"}` y `GET /actuator/env` sin token → 401 | ESP-13 §6 |
 
 ## 9. Verificación
 
@@ -274,6 +276,12 @@ mvn test
 
 # CA-12
 cd ../../backend ; mvn spring-boot:run
+
+# CA-13 (health publico y resto de Actuator cerrado)
+# GET /actuator/health debe responder {"status":"UP"} sin token
+curl.exe -s http://localhost:9102/actuator/health
+# GET /actuator/env sin token debe responder 401
+curl.exe -s -o NUL -w "%{http_code}" http://localhost:9102/actuator/env
 ```
 
 ## 10. Reversa

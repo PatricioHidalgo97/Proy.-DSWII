@@ -170,7 +170,7 @@ aprovecha la misma base, los mismos correlativos y el mismo cliente de catálogo
 - **Depende de:** T-01.
 - **Pasos:**
   1. Copiar el filtro JWT con `UsuarioPrincipal`.
-  2. Reglas: `OPTIONS` y Swagger públicos; `PUT /api/egresos/*/anular` ADMIN; resto autenticado.
+  2. Reglas: `OPTIONS`, Swagger y `/actuator/health` públicos; `PUT /api/egresos/*/anular` ADMIN; resto autenticado.
   3. Sin CORS.
   4. Agregar el handler que traduce `DependenciaNoDisponibleException` a 503.
   5. Declarar `app.clients.catalog.url` desde `CATALOG_URL`.
@@ -297,6 +297,7 @@ construir los snapshots.
 | CA-11 | El contrato parcial está exportado | `docs/openapi/cash.json` con 13 paths y 14 operaciones | ESP-08 §8 |
 | CA-12 | Las pruebas de cobranza pasan | `mvn test` en verde | ESP-13 §5.1 |
 | CA-13 | Egresos siguen en el monolito | La pantalla de egresos carga | ESP-11 §7 Fase 3 |
+| CA-14 | El health de 9104 responde `UP` sin token | `curl.exe http://localhost:9104/actuator/health` | ESP-13 §6 |
 
 ## 9. Verificación
 
@@ -332,6 +333,9 @@ mysql -u gestion_user -p gestion_cash -e "SELECT COUNT(*) FROM cuentas_cobrar;"
 
 # CA-12
 cd microservices/cash-service ; mvn test
+
+# CA-14
+curl.exe http://localhost:9104/actuator/health
 ```
 
 ## 10. Reversa
