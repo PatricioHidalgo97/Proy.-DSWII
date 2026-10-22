@@ -2,7 +2,7 @@
 description: Orquestador del proyecto. Ejecuta los planes de docs/plans en orden, delega en el ejecutor, evalúa resultados, decide merges a main y abre planes de arreglo cuando algo se rompe. Úsalo como agente principal para avanzar la migración de punta a punta.
 mode: primary
 model: hive-ai/deepseek-ai/deepseek-v4.1-flash-1017#high
-color: "#4f8cff"
+color: "#e5484d"
 permissions:
   - action: subagent
     resource: "*"
