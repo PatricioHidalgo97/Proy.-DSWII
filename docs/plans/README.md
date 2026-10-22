@@ -268,14 +268,21 @@ inconsistente.
 | PLAN-05 | cash-service: tesorería, egresos y reportes | ESP-03, ESP-04, ESP-08 | PLAN-04 |
 | PLAN-06 | Contrato consolidado y Swagger agregado | ESP-04, ESP-07, ESP-08 | PLAN-02, PLAN-03, PLAN-05 |
 | PLAN-07 | Postman completo, regresión y demostración | ESP-00, ESP-04, ESP-09, ESP-11, ESP-13 | PLAN-06 |
+| PLAN-08 | Arreglo del health de identity y alineación de la cadena de seguridad | ESP-04, ESP-05, ESP-09, ESP-13 | PLAN-00, PLAN-01 |
 
 Esta tabla es la referencia de secuencia. Cada plan se escribe en su propio
 archivo cuando corresponda.
 
+PLAN-08 se agrega fuera de la secuencia de extracción: no crea funcionalidad,
+repara un criterio que PLAN-02 rompió al ejecutarse y adelanta en los textos de
+PLAN-03 y PLAN-04 la misma regla. Debe ejecutarse antes de que PLAN-02 se cierre;
+como PLAN-06 depende de PLAN-02, también lo antecede transitivamente.
+
 ### 8.3 Desviaciones respecto de la secuencia original
 
-La versión anterior de esta tabla preveía siete planes. La secuencia vigente
-tiene ocho, por tres motivos que se apoyan en las propias especificaciones:
+La versión anterior de esta tabla preveía siete planes. La secuencia de
+extracción vigente tiene ocho, por tres motivos que se apoyan en las propias
+especificaciones (PLAN-08 es posterior y no forma parte de esa secuencia):
 
 | Cambio | Motivo | Referencia |
 |---|---|---|
@@ -300,6 +307,14 @@ citan los IDs que aplican.
 | PLAN-05 | [05-cash-service-tesoreria-reportes.md](05-cash-service-tesoreria-reportes.md) | Escrito | PLAN-04 |
 | PLAN-06 | [06-contrato-y-swagger-agregado.md](06-contrato-y-swagger-agregado.md) | Escrito | PLAN-02, PLAN-03, PLAN-05 |
 | PLAN-07 | [07-postman-regresion-y-demo.md](07-postman-regresion-y-demo.md) | Escrito | PLAN-06 |
+| PLAN-08 | [08-arreglo-health-identity.md](08-arreglo-health-identity.md) | Escrito | PLAN-00, PLAN-01 |
+
+> PLAN-08 repara el health de `identity-service` sobre la misma rama y el mismo
+> PR que PLAN-02 (PR #7, abierto). No depende de que PLAN-02 esté cerrado: es
+> requisito para poder cerrarlo, y por eso sus dependencias declaradas son
+> PLAN-00 —cuyo CA-03 restaura— y PLAN-01 —ya cerrado—, por el que se verifican
+> CA-09 y CA-12. Además alinea los textos de PLAN-03 y PLAN-04 para que no
+> hereden el mismo defecto.
 
 > El estado solo puede ser: `No escrito`, `Escrito`, `En ejecución`, `Cerrado`
 > o `Bloqueado`. Un plan `Bloqueado` indica la precondición que falta.
