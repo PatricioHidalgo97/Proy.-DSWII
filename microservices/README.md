@@ -20,57 +20,89 @@ módulo compartido y no hay servidor de descubrimiento (PR-06, ESP-13 §1.1).
 - MySQL 8 o superior accesible en `DB_PORT` (por defecto 3306)
 - Bases creadas con `database/crear_base_microservicios.sql`
 
-## Estado 1 — operación local (PLAN-01, ESP-11 §2.2)
+## Estado 3 — arquitectura final (PLAN-05, ESP-11 §2.4)
 
-El estado que deja PLAN-01 es el **Estado 1 del strangler**:
+El estado que deja PLAN-05 es el **Estado 3 del strangler**: toda la API pública
+se sirve desde microservicios y el monolito ya no recibe tráfico del frontend.
 
 ```text
 Angular 4400 -> Gateway 9101 -> identity 9102  (/api/auth/**)
-                            -> Monolito 9090  (todo lo demás)
+                            -> catalog  9103  (socios, giros, puestos, servicios, bancos)
+                            -> cash     9104  (cuentas, recibos, egresos, reportes)
 ```
 
-Mientras los servicios de dominio no expongan endpoints, el gateway enruta por
-prefijo y los destinos por defecto apuntan al monolito para que el sistema
-completo siga funcionando.
+- **Los 52 endpoints del contrato viven en microservicios.** El conteo coincide
+  con los OpenAPI exportados en `docs/openapi/`: `identity.json` 2 operaciones,
+  `catalog.json` 25 y `cash.json` 25.
+- **La ruta `monolito` fue retirada.** El gateway declara diez rutas, todas con
+  destino explícito; ninguna apunta al puerto 9090. Un prefijo no listado
+  devuelve 404 del gateway (ESP-07 §4.1).
+- **El monolito queda como respaldo manual.** Sigue siendo ejecutable en 9090
+  con su propia base (`sistema_gestion`) y responde login, pero ya no está
+  enrutado ni recibe llamadas del frontend (ESP-11 §9).
 
 ### Qué prefijo va a dónde
 
-| Prefijo | Servicio dueño | Destino por defecto en Estado 1 |
+| Prefijo | Servicio dueño | Destino por defecto |
 |---|---|---|
-| `/api/auth/**` | `identity-service` | monolito (9090) |
-| `/api/socios/**` | `catalog-service` | monolito (9090) |
-| `/api/giros/**` | `catalog-service` | monolito (9090) |
-| `/api/puestos/**` | `catalog-service` | monolito (9090) |
-| `/api/servicios/**` | `catalog-service` | monolito (9090) |
-| `/api/bancos/**` | `catalog-service` | monolito (9090) |
-| `/api/cuentas/**` | `cash-service` | monolito (9090) |
-| `/api/recibos/**` | `cash-service` | monolito (9090) |
-| `/api/egresos/**` | `cash-service` | monolito (9090) |
-| `/api/reportes/**` | `cash-service` | monolito (9090) |
-| cualquier otro `/api/**` | — | monolito (9090), ruta `monolito` |
+| `/api/auth/**` | `identity-service` | `${IDENTITY_URL:http://localhost:9102}` |
+| `/api/socios/**` | `catalog-service` | `${CATALOG_URL:http://localhost:9103}` |
+| `/api/giros/**` | `catalog-service` | `${CATALOG_URL:http://localhost:9103}` |
+| `/api/puestos/**` | `catalog-service` | `${CATALOG_URL:http://localhost:9103}` |
+| `/api/servicios/**` | `catalog-service` | `${CATALOG_URL:http://localhost:9103}` |
+| `/api/bancos/**` | `catalog-service` | `${CATALOG_URL:http://localhost:9103}` |
+| `/api/cuentas/**` | `cash-service` | `${CASH_URL:http://localhost:9104}` |
+| `/api/recibos/**` | `cash-service` | `${CASH_URL:http://localhost:9104}` |
+| `/api/egresos/**` | `cash-service` | `${CASH_URL:http://localhost:9104}` |
+| `/api/reportes/**` | `cash-service` | `${CASH_URL:http://localhost:9104}` |
+| cualquier otro `/api/**` | — | **404 del gateway** |
 
 Los destinos se mueven por variable de entorno, sin tocar código:
-`IDENTITY_URL` (PLAN-02), `CATALOG_URL` (PLAN-03), `CASH_URL` (PLAN-04/05). La
-ruta `monolito` se retira en PLAN-05.
+`IDENTITY_URL` (PLAN-02), `CATALOG_URL` (PLAN-03) y `CASH_URL` (PLAN-04/05).
 
 ### Orden de arranque
 
-1. **Monolito de respaldo** (9090): `cd backend && mvn spring-boot:run`
-2. **API Gateway** (9101): `cd microservices/api-gateway && mvn spring-boot:run`
-3. **Frontend** (4400): `cd frontend && npm start`
+1. **MySQL** con `gestion_auth`, `gestion_catalog` y `gestion_cash`.
+2. **identity-service** (9102): `cd microservices/identity-service && mvn spring-boot:run`
+3. **catalog-service** (9103): `cd microservices/catalog-service && mvn spring-boot:run`
+4. **cash-service** (9104): `cd microservices/cash-service && mvn spring-boot:run`
+5. **api-gateway** (9101): `cd microservices/api-gateway && mvn spring-boot:run`
+6. **Frontend** (4400): `cd frontend && npm start`
 
-Los servicios de dominio (`identity-service`, `catalog-service`,
-`cash-service`) se arrancan cuando su plan los extrae; no hacen falta para el
-Estado 1.
+Cada servicio se arranca **desde su propia carpeta**: las migraciones Flyway se
+leen con una ruta relativa al directorio del servicio
+(`filesystem:../../database/flyway/{servicio}`). No hay dependencia estricta de
+arranque entre servicios (ESP-06 §6.2); el orden de arriba es el recomendado
+para que el health del gateway no marque destinos caídos.
 
-Verificación rápida:
+Variables mínimas que deben estar exportadas antes de arrancar los cuatro
+servicios:
 
 ```bash
+export DB_USERNAME=<usuario>
+export DB_PASSWORD=<contraseña>
+export JWT_SECRET=<secreto de al menos 32 caracteres>   # mismo en los cuatro
+export IDENTITY_URL=http://localhost:9102
+export CATALOG_URL=http://localhost:9103
+export CASH_URL=http://localhost:9104
+```
+
+`MONOLITO_URL` **ya no se usa**: la ruta comodín desapareció en PLAN-05 T-07.
+
+Verificación rápida del Estado 3:
+
+```bash
+# Los cuatro servicios arriba
 curl http://localhost:9101/actuator/health
+curl http://localhost:9102/actuator/health
+curl http://localhost:9103/actuator/health
+curl http://localhost:9104/actuator/health
+
+# Diez rutas, ninguna al 9090
 curl http://localhost:9101/actuator/gateway/routes
-curl -X POST http://localhost:9101/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"usuario":"admin","password":"Admin123*"}'
+
+# Un prefijo desconocido responde 404 del gateway (no 503 ni 500)
+curl -i http://localhost:9101/api/inexistente
 ```
 
 ## Cómo arrancar un servicio de dominio
@@ -89,19 +121,6 @@ mvn spring-boot:run
 
 El health check queda disponible en `http://localhost:<puerto>/actuator/health`.
 
-## Orden de arranque completo (ESP-06 §6.2)
-
-No hay dependencia estricta de arranque entre servicios. Se recomienda:
-
-1. `identity-service`
-2. `catalog-service`
-3. `cash-service`
-4. `api-gateway`
-5. `frontend`
-
-En el Estado 1 el monolito se arranca antes que el gateway, porque es el destino
-efectivo de todas las rutas de dominio.
-
 ## Configuración
 
 Todos los puertos, URLs y credenciales se leen de variables de entorno con los
@@ -110,11 +129,13 @@ valores por defecto de ESP-02 §1. Ningún valor se fija en el código.
 | Variable | Servicio | Valor por defecto |
 |---|---|---|
 | `GATEWAY_PORT` | `api-gateway` | 9101 |
-| `IDENTITY_URL` | `api-gateway` | `http://localhost:9090` (Estado 1) |
-| `CATALOG_URL` | `api-gateway` | `http://localhost:9090` (Estado 1) |
-| `CASH_URL` | `api-gateway` | `http://localhost:9090` (Estado 1) |
-| `MONOLITO_URL` | `api-gateway` | `http://localhost:9090` |
+| `IDENTITY_URL` | `api-gateway` | `http://localhost:9102` |
+| `CATALOG_URL` | `api-gateway`, `cash-service` | `http://localhost:9103` |
+| `CASH_URL` | `api-gateway` | `http://localhost:9104` |
 | `CORS_ORIGINS` | `api-gateway` | `http://localhost:4400` |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | los tres servicios | `localhost:3306`, sin valor por defecto en credenciales |
+| `JWT_SECRET` | los tres servicios | sin valor por defecto: el servicio no arranca si falta |
+| `CATALOG_CONNECT_TIMEOUT_MS`, `CATALOG_READ_TIMEOUT_MS` | `cash-service` | 1500 / 3000 |
 
 Las migraciones Flyway viven centralizadas en `database/flyway/{servicio}` y se
 leen con una ruta relativa al directorio del servicio:
@@ -125,15 +146,28 @@ spring.flyway.locations=filesystem:../../database/flyway/{servicio}
 
 Por eso los servicios se arrancan **desde su propia carpeta**.
 
-## Reversa al Estado 0
+## Contratos exportados
 
-La reversa es de configuración, no de código (ESP-11 §8):
+Cada servicio expone su OpenAPI en `/v3/api-docs`. Los archivos versionados en
+`docs/openapi/` se regeneran desde el servicio en ejecución:
 
-1. Detener el gateway.
-2. Devolver `apiUrl` a `http://localhost:9090/api` en
-   `frontend/src/environments/environment.ts`.
-3. Arrancar el frontend; vuelve a hablar con el monolito.
+```bash
+curl http://localhost:9102/v3/api-docs -o docs/openapi/identity.json
+curl http://localhost:9103/v3/api-docs -o docs/openapi/catalog.json
+curl http://localhost:9104/v3/api-docs -o docs/openapi/cash.json
+```
 
-Si solo se quiere cambiar el puerto del gateway o el destino del respaldo, basta
-con exportar `GATEWAY_PORT` o `MONOLITO_URL` antes de arrancarlo. No se edita
-ningún archivo.
+## Reversa al Estado 2 (respaldo al monolito)
+
+La reversa es de configuración, no de código (ESP-11 §8, PLAN-05 §10):
+
+1. Volver a declarar en `api-gateway/src/main/resources/application.properties`
+   una ruta `monolito` con `Path=/api/**`, `uri=${MONOLITO_URL:http://localhost:9090}`
+   y un `order` mayor que 33.
+2. Exportar `MONOLITO_URL` y reiniciar el gateway.
+3. Si se quiere volver al Estado 0, devolver `apiUrl` a
+   `http://localhost:9090/api` en `frontend/src/environments/environment.ts` y
+   arrancar el monolito.
+
+Mientras la ruta `monolito` no se vuelva a declarar, `MONOLITO_URL` no tiene
+efecto: el gateway responde 404 a cualquier prefijo no listado.
