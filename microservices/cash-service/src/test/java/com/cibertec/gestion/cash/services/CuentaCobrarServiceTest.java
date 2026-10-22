@@ -94,7 +94,7 @@ class CuentaCobrarServiceTest {
         when(catalogoClient.getPuesto(anyLong())).thenReturn(puesto());
         when(catalogoClient.getSocio(anyLong())).thenReturn(
                 new com.cibertec.gestion.cash.clients.dto.SocioRemoto(
-                        SOCIO_ID, "SOC-001", "Carlos", "Caja", 1, true));
+                        SOCIO_ID, "SOC-001", "Carlos", "Caja", "A-001", 1, true));
     }
 
     // --- casos portados del monolito -------------------------------------
