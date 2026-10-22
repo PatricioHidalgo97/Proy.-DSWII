@@ -304,12 +304,12 @@ citan los IDs que aplican.
 | PLAN-01 | [01-api-gateway-y-frontend.md](01-api-gateway-y-frontend.md) | Cerrado | PLAN-00 |
 | PLAN-02 | [02-identity-service.md](02-identity-service.md) | Cerrado | PLAN-00, PLAN-01 |
 | PLAN-03 | [03-catalog-service.md](03-catalog-service.md) | Cerrado | PLAN-00, PLAN-01 |
-| PLAN-04 | [04-cash-service-cobranza.md](04-cash-service-cobranza.md) | Escrito | PLAN-00, PLAN-01, PLAN-03 |
+| PLAN-04 | [04-cash-service-cobranza.md](04-cash-service-cobranza.md) | Cerrado | PLAN-00, PLAN-01, PLAN-03 |
 | PLAN-05 | [05-cash-service-tesoreria-reportes.md](05-cash-service-tesoreria-reportes.md) | Escrito | PLAN-04 |
 | PLAN-06 | [06-contrato-y-swagger-agregado.md](06-contrato-y-swagger-agregado.md) | Escrito | PLAN-02, PLAN-03, PLAN-05 |
 | PLAN-07 | [07-postman-regresion-y-demo.md](07-postman-regresion-y-demo.md) | Escrito | PLAN-06 |
 | PLAN-08 | [08-arreglo-health-identity.md](08-arreglo-health-identity.md) | Cerrado | PLAN-00, PLAN-01 |
-| PLAN-09 | [09-arreglo-ids-anidados-cuenta.md](09-arreglo-ids-anidados-cuenta.md) | Escrito | PLAN-04 |
+| PLAN-09 | [09-arreglo-ids-anidados-cuenta.md](09-arreglo-ids-anidados-cuenta.md) | Cerrado | PLAN-04 |
 
 > PLAN-08 repara el health de `identity-service` sobre la misma rama y el mismo
 > PR que PLAN-02 (PR #7, abierto). No depende de que PLAN-02 esté cerrado: es
