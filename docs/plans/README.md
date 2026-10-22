@@ -269,6 +269,7 @@ inconsistente.
 | PLAN-06 | Contrato consolidado y Swagger agregado | ESP-04, ESP-07, ESP-08 | PLAN-02, PLAN-03, PLAN-05 |
 | PLAN-07 | Postman completo, regresión y demostración | ESP-00, ESP-04, ESP-09, ESP-11, ESP-13 | PLAN-06 |
 | PLAN-08 | Arreglo del health de identity y alineación de la cadena de seguridad | ESP-04, ESP-05, ESP-09, ESP-13 | PLAN-00, PLAN-01 |
+| PLAN-09 | Arreglo de los identificadores anidados de `puesto` en la cuenta por cobrar | ESP-03, ESP-04, ESP-06, ESP-08, ESP-09, ESP-12, ESP-13 | PLAN-04 |
 
 Esta tabla es la referencia de secuencia. Cada plan se escribe en su propio
 archivo cuando corresponda.
@@ -308,6 +309,7 @@ citan los IDs que aplican.
 | PLAN-06 | [06-contrato-y-swagger-agregado.md](06-contrato-y-swagger-agregado.md) | Escrito | PLAN-02, PLAN-03, PLAN-05 |
 | PLAN-07 | [07-postman-regresion-y-demo.md](07-postman-regresion-y-demo.md) | Escrito | PLAN-06 |
 | PLAN-08 | [08-arreglo-health-identity.md](08-arreglo-health-identity.md) | Cerrado | PLAN-00, PLAN-01 |
+| PLAN-09 | [09-arreglo-ids-anidados-cuenta.md](09-arreglo-ids-anidados-cuenta.md) | Escrito | PLAN-04 |
 
 > PLAN-08 repara el health de `identity-service` sobre la misma rama y el mismo
 > PR que PLAN-02 (PR #7, abierto). No depende de que PLAN-02 esté cerrado: es
@@ -315,6 +317,14 @@ citan los IDs que aplican.
 > PLAN-00 —cuyo CA-03 restaura— y PLAN-01 —ya cerrado—, por el que se verifican
 > CA-09 y CA-12. Además alinea los textos de PLAN-03 y PLAN-04 para que no
 > hereden el mismo defecto.
+
+> PLAN-09 repara el CA-02 de PLAN-04 sobre la misma rama y el mismo PR (#9,
+> abierto) y por eso su única dependencia declarada es PLAN-04. Introduce la
+> migración `V5` de `cash`, que es la primera que no pertenece a la secuencia
+> original de ESP-06 §2: PLAN-05 no crea migraciones, y si alguna vez las
+> necesitara tomaría el número siguiente al máximo aplicado. PLAN-05 declara esa
+> precondición en su §4, de modo que puede ejecutarse antes o después de PLAN-09
+> sin colisión de numeración.
 
 > El estado solo puede ser: `No escrito`, `Escrito`, `En ejecución`, `Cerrado`
 > o `Bloqueado`. Un plan `Bloqueado` indica la precondición que falta.
