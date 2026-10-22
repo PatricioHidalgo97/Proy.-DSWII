@@ -36,7 +36,7 @@ public class ServicioEntity {
     private Moneda moneda;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "cargo_a", nullable = false, length = 20)
     private CargoA cargoA;
 
     @Column(nullable = false)
