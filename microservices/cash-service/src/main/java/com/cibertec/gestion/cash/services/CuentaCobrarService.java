@@ -327,6 +327,8 @@ public class CuentaCobrarService implements ICuentaCobrarService {
             builder.puestoNumero(puesto.numero())
                     .puestoNombreInquilino(puesto.nombreInquilino())
                     .puestoGiroNombre(puesto.giro() == null ? null : puesto.giro().nombre())
+                    .puestoGiroId(puesto.giro() == null ? null : puesto.giro().id())
+                    .puestoSocioId(socioPuesto == null ? null : socioPuesto.id())
                     .puestoSocioCodigo(socioPuesto == null ? null : socioPuesto.codigo())
                     .puestoSocioNombres(socioPuesto == null ? null : socioPuesto.nombres())
                     .puestoSocioApellidos(socioPuesto == null ? null : socioPuesto.apellidos());
