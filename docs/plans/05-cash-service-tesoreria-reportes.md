@@ -48,10 +48,15 @@ microservicios y la ruta `monolito` del gateway se desactiva.
 | Condición | Cómo se comprueba |
 |---|---|
 | PLAN-04 cerrado | Índice de `docs/plans/README.md` |
-| `gestion_cash` con `V1` a `V4` aplicadas | `flyway_schema_history` |
+| `gestion_cash` con `V1` a `V4` aplicadas, más `V5` si PLAN-09 ya se ejecutó | `flyway_schema_history` |
 | 24 egresos sembrados en tres estados | Conteos de PLAN-00 §9.1 |
 | Correlativo `EGRESO = 24` | `SELECT ultimo_numero FROM correlativos WHERE tipo='EGRESO'` |
 | `docs/plantilla_egresos.csv` presente con dos filas | Lectura del archivo |
+
+PLAN-05 no crea migraciones en `cash`: la `V4` ya trae los seeds de egresos y
+del correlativo. Si alguna vez necesitara una, tomará el número siguiente al
+máximo aplicado en `flyway_schema_history` (`V6` si la `V5` de PLAN-09 ya
+existe), para no colisionar con la numeración consecutiva de ESP-06 §4.
 
 ## 5. Riesgos y mitigaciones
 
