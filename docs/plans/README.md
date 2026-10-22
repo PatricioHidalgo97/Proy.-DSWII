@@ -305,7 +305,7 @@ citan los IDs que aplican.
 | PLAN-02 | [02-identity-service.md](02-identity-service.md) | Cerrado | PLAN-00, PLAN-01 |
 | PLAN-03 | [03-catalog-service.md](03-catalog-service.md) | Cerrado | PLAN-00, PLAN-01 |
 | PLAN-04 | [04-cash-service-cobranza.md](04-cash-service-cobranza.md) | Cerrado | PLAN-00, PLAN-01, PLAN-03 |
-| PLAN-05 | [05-cash-service-tesoreria-reportes.md](05-cash-service-tesoreria-reportes.md) | Escrito | PLAN-04 |
+| PLAN-05 | [05-cash-service-tesoreria-reportes.md](05-cash-service-tesoreria-reportes.md) | Cerrado | PLAN-04 |
 | PLAN-06 | [06-contrato-y-swagger-agregado.md](06-contrato-y-swagger-agregado.md) | Escrito | PLAN-02, PLAN-03, PLAN-05 |
 | PLAN-07 | [07-postman-regresion-y-demo.md](07-postman-regresion-y-demo.md) | Escrito | PLAN-06 |
 | PLAN-08 | [08-arreglo-health-identity.md](08-arreglo-health-identity.md) | Cerrado | PLAN-00, PLAN-01 |
