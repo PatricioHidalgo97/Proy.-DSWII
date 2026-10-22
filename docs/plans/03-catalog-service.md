@@ -139,7 +139,7 @@ de lectura para caja.
 - **Depende de:** T-01.
 - **Pasos:**
   1. Copiar el `JwtService` y el filtro de identidad, con `UsuarioPrincipal`.
-  2. Reglas: `OPTIONS /**` y Swagger públicos; `DELETE /api/**` ADMIN; `POST` y `PUT` de los cinco recursos ADMIN; resto autenticado.
+  2. Reglas: `OPTIONS /**`, Swagger y `/actuator/health` públicos; `DELETE /api/**` ADMIN; `POST` y `PUT` de los cinco recursos ADMIN; resto autenticado.
   3. Sin CORS.
   4. Copiar el `ApiExceptionHandler` completo.
   5. Validar al arranque que el secreto tenga al menos 32 caracteres.
@@ -247,6 +247,7 @@ catálogo deja de depender del monolito.
 | CA-09 | Swagger y contrato exportado | `docs/openapi/catalog.json` con 10 paths y 25 operaciones | ESP-08 §8 |
 | CA-10 | Las pruebas pasan | `mvn test` en verde | ESP-13 §5.1 |
 | CA-11 | Caja sigue funcionando contra el monolito | Las pantallas de caja cargan | ESP-11 §7 Fase 2 |
+| CA-12 | El health de 9103 responde `UP` sin token | `curl.exe http://localhost:9103/actuator/health` | ESP-13 §6 |
 
 ## 9. Verificación
 
@@ -278,6 +279,9 @@ curl.exe http://localhost:9103/v3/api-docs -o docs/openapi/catalog.json
 
 # CA-10
 cd microservices/catalog-service ; mvn test
+
+# CA-12
+curl.exe http://localhost:9103/actuator/health
 ```
 
 ## 10. Reversa
