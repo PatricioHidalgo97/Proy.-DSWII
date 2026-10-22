@@ -105,6 +105,11 @@
                   "pm.test('Devuelve token', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
                   "if (body.token) {",
                   "  pm.collectionVariables.set('token', body.token);",
+                  "  // El entorno declara `token` vacío y tiene prioridad sobre la variable",
+                  "  // de colección: se sincroniza para que {{token}} resuelva con el JWT.",
+                  "  if (pm.environment.name) {",
+                  "    pm.environment.set('token', body.token);",
+                  "  }",
                   "}"
                 ]
               }
@@ -119,6 +124,137 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usuario\": \"admin\",\n  \"password\": \"Admin123*\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login operador",
+          "description": "Login de un usuario OPERADOR sembrado por Flyway (ESP-09 §4.1). Guarda `tokenOperador`.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login de operador correcto', () => pm.response.to.have.status(200));",
+                  "let body = {};",
+                  "try {",
+                  "  body = pm.response.json();",
+                  "} catch (e) {",
+                  "  body = {};",
+                  "}",
+                  "pm.test('Rol OPERADOR', () => pm.expect(body.rol).to.eql('OPERADOR'));",
+                  "pm.test('Usuario caja', () => pm.expect(body.usuario).to.eql('caja'));",
+                  "pm.test('Devuelve tokenOperador', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "if (body.token) {",
+                  "  pm.collectionVariables.set('tokenOperador', body.token);",
+                  "  if (pm.environment.name) {",
+                  "    pm.environment.set('tokenOperador', body.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"caja\",\n  \"password\": \"Caja123*\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Usuario actual",
+          "description": "GET /api/auth/me con el token del admin (ESP-04 §5.2).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Usuario actual devuelve 200', () => pm.response.to.have.status(200));",
+                  "let body = {};",
+                  "try {",
+                  "  body = pm.response.json();",
+                  "} catch (e) {",
+                  "  body = {};",
+                  "}",
+                  "pm.test('Devuelve el usuario del token', () => pm.expect(body.usuario).to.eql('admin'));",
+                  "pm.test('Devuelve el rol del token', () => pm.expect(body.rol).to.eql('ADMIN'));",
+                  "pm.test('Conserva los cinco campos', () => {",
+                  "  pm.expect(body).to.have.property('id');",
+                  "  pm.expect(body).to.have.property('nombres');",
+                  "  pm.expect(body).to.have.property('apellidos');",
+                  "});",
+                  "pm.test('No expone password', () => pm.expect(body).to.not.have.property('password'));",
+                  "pm.test('No devuelve token en me', () => pm.expect(body).to.not.have.property('token'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Login inválido",
+          "description": "Credenciales incorrectas devuelven 401 con la forma de ESP-04 §6.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login inválido devuelve 401', () => pm.response.to.have.status(401));",
+                  "let body = {};",
+                  "try {",
+                  "  body = pm.response.json();",
+                  "} catch (e) {",
+                  "  body = {};",
+                  "}",
+                  "pm.test('El cuerpo usa la forma de error de ESP-04 §6', () => {",
+                  "  pm.expect(body).to.have.property('timestamp');",
+                  "  pm.expect(body.status).to.eql(401);",
+                  "  pm.expect(body.message).to.eql('Usuario o contraseña incorrectos');",
+                  "});",
+                  "pm.test('No entrega token', () => pm.expect(body).to.not.have.property('token'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"password\": \"clave-incorrecta\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
