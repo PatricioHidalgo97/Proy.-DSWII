@@ -87,6 +87,12 @@ public class CuentaCobrarEntity {
     @Column(name = "puesto_giro_nombre", length = 100)
     private String puestoGiroNombre;
 
+    @Column(name = "puesto_giro_id")
+    private Long puestoGiroId;
+
+    @Column(name = "puesto_socio_id")
+    private Long puestoSocioId;
+
     @Column(name = "puesto_socio_codigo", length = 20)
     private String puestoSocioCodigo;
 
