@@ -1,0 +1,250 @@
+==============================================================================
+PLAN-09 T-09 — Re-verificación del CA-02 de PLAN-04 y de la degradación
+Evidencia DESPUÉS de la migración V5 y del arreglo de código
+==============================================================================
+
+Commit de código verificado: 526002f6 ("test(postman): aseverar los ids
+anidados del puesto en caja"), sobre la rama feature/cash-service-cobranza
+(PR #9). Migración aplicada: V5__snapshot_ids_puesto.sql (commit f4824318).
+Fecha de captura: 2026-10-22
+Entorno: JDK 21.0.11, Maven 3.9.16, MySQL 9.7.1 (root), catalog 9103,
+identity 9102, cash 9104 y gateway 9101.
+
+==============================================================================
+Paso 1 — Comparación campo por campo contra baseline-contrato.md §1.4
+==============================================================================
+
+Comando:
+  TOKEN=$(curl.exe -s -X POST http://localhost:9101/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"usuario":"admin","password":"Admin123*"}' | jq -r .token)
+  curl.exe -s http://localhost:9101/api/cuentas -H "Authorization: Bearer $TOKEN"
+
+Cuentas devueltas: 344
+Cuentas que cumplen el filtro (puesto.numero = "P-101", periodo = "2026-10",
+servicio.id = 1): 1
+
+Objeto completo devuelto:
+
+{
+  "id": 255,
+  "periodo": "2026-10",
+  "monto": 80,
+  "estado": "PENDIENTE",
+  "fechaCreacion": "2026-10-05T09:15:00",
+  "puesto": {
+    "id": 1,
+    "numero": "P-101",
+    "nombreInquilino": "Rosa Quispe Mamani",
+    "socio": {
+      "id": 1,
+      "codigo": "SOC-001",
+      "nombres": "Rosa",
+      "apellidos": "Quispe Mamani"
+    },
+    "giro": {
+      "id": 1,
+      "nombre": "Abarrotes y víveres"
+    }
+  },
+  "socio": null,
+  "servicio": {
+    "id": 1,
+    "nombre": "Mantenimiento de puesto",
+    "moneda": "PEN",
+    "cargoA": "PUESTO",
+    "dependeConsumo": false
+  },
+  "lecturaInicial": null,
+  "lecturaFinal": null,
+  "costoUnitario": null
+}
+
+Comparación programática contra el JSON literal de §1.4 (compara valor, campos
+faltantes y campos extra en todos los niveles):
+
+  DIFERENCIAS: 0
+  --- conteo de campos de primer nivel: 11
+      ["id","periodo","monto","estado","fechaCreacion","puesto","socio",
+       "servicio","lecturaInicial","lecturaFinal","costoUnitario"]
+  --- puesto: 5  ["id","numero","nombreInquilino","socio","giro"]
+  --- servicio: 5  puesto.socio: 4  puesto.giro: 2
+
+Resultado: los once campos de primer nivel, los cinco de `servicio`, los cuatro
+de `puesto.socio` y los dos de `puesto.giro` coinciden con el baseline, con
+"puesto.socio.id": 1 y "puesto.giro.id": 1.
+
+>>> CA-02 de PLAN-04: cumple.
+>>> CA-01 de PLAN-09: cumple.
+>>> CA-02 de PLAN-09: cumple (misma forma, sin campos añadidos ni renombrados).
+
+Antes del arreglo (docs/evidencias/06-cuentas-ids-anidados-antes.txt) esos dos
+valores eran null; hoy son 1 y 1.
+
+==============================================================================
+Paso 2 — «No queda ninguna fila resoluble sin id» y «ningún id contradice
+           al catálogo» (consultas de §9)
+==============================================================================
+
+  -- CA-05 giro_pendiente
+  SELECT COUNT(*) FROM cuentas_cobrar c WHERE c.puesto_id IS NOT NULL
+    AND c.puesto_giro_nombre IS NOT NULL AND c.puesto_giro_id IS NULL
+    AND EXISTS (SELECT 1 FROM gestion_catalog.giros g
+                WHERE g.nombre = c.puesto_giro_nombre);
+  --> 0
+
+  -- CA-05 socio_pendiente
+  SELECT COUNT(*) FROM cuentas_cobrar c WHERE c.puesto_id IS NOT NULL
+    AND c.puesto_socio_codigo IS NOT NULL AND c.puesto_socio_id IS NULL
+    AND EXISTS (SELECT 1 FROM gestion_catalog.socios s
+                WHERE s.codigo = c.puesto_socio_codigo);
+  --> 0
+
+  -- CA-06 giro_incoherente
+  SELECT COUNT(*) FROM cuentas_cobrar c
+    LEFT JOIN gestion_catalog.giros g ON g.id = c.puesto_giro_id
+   WHERE c.puesto_giro_id IS NOT NULL
+     AND (g.id IS NULL OR g.nombre <> c.puesto_giro_nombre);
+  --> 0
+
+  -- CA-06 socio_incoherente
+  SELECT COUNT(*) FROM cuentas_cobrar c
+    LEFT JOIN gestion_catalog.socios s ON s.id = c.puesto_socio_id
+   WHERE c.puesto_socio_id IS NOT NULL
+     AND (s.id IS NULL OR s.codigo <> c.puesto_socio_codigo);
+  --> 0
+
+  -- CA-07 huerfanas (puesto que ya no existe en el catálogo)
+  SELECT COUNT(*) FROM cuentas_cobrar c
+    LEFT JOIN gestion_catalog.puestos p ON p.id = c.puesto_id
+   WHERE c.puesto_id IS NOT NULL AND p.id IS NULL;
+  --> 0        (en el estado sembrado; ver paso 3)
+
+  -- CA-07 no_resoluble_sin_snapshot
+  SELECT COUNT(*) FROM cuentas_cobrar c
+    LEFT JOIN gestion_catalog.puestos p ON p.id = c.puesto_id
+   WHERE (c.puesto_id IS NOT NULL AND p.id IS NULL)
+     AND (c.puesto_numero IS NULL OR c.puesto_giro_nombre IS NULL);
+  --> 0
+
+  -- CA-07 socio_con_ids_de_puesto
+  SELECT COUNT(*) FROM cuentas_cobrar
+   WHERE puesto_id IS NULL AND (puesto_socio_id IS NOT NULL OR puesto_giro_id IS NOT NULL);
+  --> 0
+
+Las tres consultas de §9 devuelven 0 y las dos de coherencia también.
+
+==============================================================================
+Paso 3 — Filas no resolubles: conteo y comparación con T-01
+==============================================================================
+
+Estado sembrado (tras V1..V5 sobre gestion_cash recreada):
+
+  cuentas_cobrar total                  344
+  con puesto_id  (pobladas con ids)     248
+  con puesto_giro_id                    248
+  con puesto_socio_id                   208
+  puestos ya no existentes en catálogo    0
+
+  Cruce con T-01: en el estado de partida había 427 cuentas y 50 filas con un
+  puesto_id ya inexistente ('P-PM-CAJA', 'P-PM-CAJA2', 'P-PRB-98'), producto de
+  las reejecuciones de Postman. Esas 50 filas quedaron con puesto_giro_id y
+  puesto_socio_id en NULL y conservaron su snapshot de texto, exactamente lo que
+  ESP-03 §10 y ESP-12 R-10 exigen. Al recrear `gestion_cash` (CA-09) esos datos
+  acumulados desaparecen y el estado vuelve a los seeds de PLAN-00 §9.1, donde
+  no hay puestos eliminados: por eso el conteo de huérfanas es 0.
+
+  Comprobación de que la V5 no inventa ids en filas huérfanas (estado con datos
+  de Postman, antes del desde-cero):
+    huerfanas                         50
+    no_resoluble_sin_snapshot          0
+    huerfanas con algún id rellenado   0   (antes de que Postman creara cuentas
+                                            nuevas con el catálogo ya borrado)
+
+  Nota: en la corrida de Newman posterior, las cuentas 346, 348 y 350 conservan
+  puesto_giro_id = 46 y puesto_socio_id = 62 porque los ids se escribieron en el
+  alta cuando el puesto 77 y su giro/socio aún existían; la carpeta «Limpieza»
+  los borra después. Es el snapshot histórico correcto (ESP-03 §10) y las cuatro
+  filas 346/348/350/351 conservan su snapshot de texto. Esas filas desaparecen en
+  el desde-cero final.
+
+Conteo de filas no resolubles: coincide con T-01 (las mismas filas, con el
+mismo texto y sin id inventado) y desaparece al restaurar los seeds.
+
+==============================================================================
+Paso 4 — GET /api/cuentas y GET /api/cuentas/puesto/1 con catalogo detenido
+==============================================================================
+
+Se detuvo catalog-service (health 9103 = 000) manteniendo identity, cash y
+gateway arriba.
+
+  GET /api/cuentas
+    HTTP/1.1 200
+    total: 344 | baseline socio.id: 1 giro.id: 1
+
+  GET /api/cuentas/puesto/1
+    HTTP/1.1 200
+    cuentas: 11
+    primera:
+      {"id":303,"puesto":{"id":1,"numero":"P-101",
+       "nombreInquilino":"Rosa Quispe Mamani",
+       "socio":{"id":1,"codigo":"SOC-001","nombres":"Rosa","apellidos":"Quispe Mamani"},
+       "giro":{"id":1,"nombre":"Abarrotes y víveres"}}}
+
+Los ids se sirven desde el snapshot: no hay ninguna llamada a catálogo al leer
+(ESP-03 §5, §8; R-03). CA-03 de PLAN-09: cumple.
+
+==============================================================================
+Paso 5 — POST /api/cuentas con catalogo caído sigue devolviendo 503 sin insertar
+==============================================================================
+
+  Conteo antes:  344
+
+  POST /api/cuentas {"periodo":"2026-11","puestoId":1,"servicioId":1,"monto":80}
+    HTTP/1.1 503
+    {"timestamp":"2026-10-22T09:51:42.0853358","status":503,
+     "message":"El catálogo no está disponible; intente más tarde"}
+
+  Conteo después: 344
+
+CA-04 de PLAN-09 y CA-07 de PLAN-04: cumple; no se insertó ninguna fila.
+
+==============================================================================
+Paso 6 — catalog-service reiniciado
+==============================================================================
+
+  curl.exe -s -o /dev/null -w "%{http_code}" http://localhost:9103/actuator/health
+  --> 200
+
+==============================================================================
+Paso 7 — Alta nueva con catálogo arriba (CA-08)
+==============================================================================
+
+  POST /api/cuentas {"periodo":"2027-02","puestoId":1,"servicioId":1,"monto":80}
+    HTTP 201
+    id: 345 | socioId: 1 | giroId: 1 | estado: PENDIENTE
+
+  Relectura en base:
+    id  puesto_id  puesto_socio_id  puesto_giro_id
+    345 1          1                1
+
+  Relectura por GET /api/cuentas/puesto/1:
+    {"id":345,"periodo":"2027-02","socioId":1,"giroId":1}
+
+La cuenta nueva nace con los dos ids y la relectura los conserva: CA-08 cumple.
+
+==============================================================================
+Resultado final de T-09
+==============================================================================
+
+- La comparación con baseline-contrato.md §1.4 no muestra diferencias.
+- Las dos consultas de «no queda fila resoluble sin id» devuelven 0.
+- La consulta de coherencia de ids contra catálogo devuelve 0 y 0.
+- El conteo de filas no resolubles coincide con T-01 y ninguna recibió un id
+  inventado.
+- Con catalog-service detenido, GET /api/cuentas y GET /api/cuentas/puesto/1
+  responden 200 con los ids informados (desde el snapshot).
+- Con catálogo caído, POST /api/cuentas responde 503 y no inserta filas.
+- El alta nueva persiste los ids y la relectura los conserva.
+
+>>> CA-02 de PLAN-04: cumple.
