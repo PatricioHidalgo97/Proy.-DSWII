@@ -1,5 +1,6 @@
 package com.cibertec.gestion.identity.security;
 
+import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -88,5 +90,33 @@ class AuthIntegrationTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("Token inválido o vencido"));
+    }
+
+    @Test
+    void healthEsPublicoSinToken() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.details").doesNotExist());
+    }
+
+    @Test
+    void restoDeActuatorNoEstaExpuesto() throws Exception {
+        mockMvc.perform(get("/actuator/env"))
+                .andExpect(status().isUnauthorized());
+
+        MvcResult login = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"usuario":"admin","password":"Admin123*"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String token = JsonPath.read(login.getResponse().getContentAsString(), "$.token");
+
+        mockMvc.perform(get("/actuator/env")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.propertySources").doesNotExist());
     }
 }
