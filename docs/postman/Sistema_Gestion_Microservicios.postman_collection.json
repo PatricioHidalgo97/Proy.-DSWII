@@ -4008,8 +4008,166 @@
     },
     {
       "name": "05 · Tesorería",
-      "description": "Egresos por el gateway (ESP-04 §4.5, ESP-09 §4.5): alta, importación CSV, consulta, procesamiento y anulación. Crea sus propios egresos y anula solo el importado, de modo que la carpeta se puede correr sola y dos veces seguidas: cada corrida recibe correlativos nuevos y no reutiliza estados.",
+      "description": "Egresos por el gateway (ESP-04 §4.5, ESP-09 §4.5): alta, importación CSV, consulta, procesamiento y anulación. Empieza con «Preparación», que obtiene sus dos tokens, y termina con «Limpieza», que libera sus ids: la carpeta se puede correr sola y dos veces seguidas porque cada corrida crea egresos nuevos y solo anula los de esa corrida.",
       "item": [
+        {
+          "name": "Preparación",
+          "description": "Obtiene los dos tokens que usa la carpeta. Se repite aquí para que «05 · Tesorería» y «06 · Reportes» se puedan ejecutar solas, sin depender de la carpeta de autenticación (ESP-09 §8).",
+          "item": [
+            {
+              "name": "Login administrador",
+              "description": "POST /api/auth/login con `admin`; guarda `token` para que la carpeta pueda correr sola.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login de admin devuelve 200', () => pm.response.to.have.status(200));",
+                      "let body = {};",
+                      "try { body = pm.response.json(); } catch (e) { body = {}; }",
+                      "pm.test('El rol es ADMIN', () => pm.expect(body.rol).to.eql('ADMIN'));",
+                      "if (body.token) {",
+                      "pm.collectionVariables.set('token', body.token);",
+                      "// El entorno declara las variables vacias y tiene prioridad: se sincroniza.",
+                      "if (pm.environment.name) {",
+                      "  pm.environment.set('token', body.token);",
+                      "}",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usuario\": \"admin\",\n  \"password\": \"Admin123*\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Login operador",
+              "description": "POST /api/auth/login con `caja`; guarda `tokenOperador` para que la carpeta pueda correr sola.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login de caja devuelve 200', () => pm.response.to.have.status(200));",
+                      "let body = {};",
+                      "try { body = pm.response.json(); } catch (e) { body = {}; }",
+                      "pm.test('El rol es OPERADOR', () => pm.expect(body.rol).to.eql('OPERADOR'));",
+                      "if (body.token) {",
+                      "pm.collectionVariables.set('tokenOperador', body.token);",
+                      "// El entorno declara las variables vacias y tiene prioridad: se sincroniza.",
+                      "if (pm.environment.name) {",
+                      "  pm.environment.set('tokenOperador', body.token);",
+                      "}",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usuario\": \"caja\",\n  \"password\": \"Caja123*\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Preparar periodo de egresos",
+              "description": "Fija `period` y `today` si la colección no los preparó antes.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);",
+                      "pm.test('Periodo disponible', () => pm.expect(d.toISOString().slice(0, 7)).to.match(/^\\d{4}-\\d{2}$/));",
+                      "if (!pm.collectionVariables.get('period')) {",
+                      "  pm.collectionVariables.set('period', d.toISOString().slice(0, 7));",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('period', d.toISOString().slice(0, 7));",
+                      "  }",
+                      "}",
+                      "if (!pm.collectionVariables.get('today')) {",
+                      "  pm.collectionVariables.set('today', d.toISOString().slice(0, 10));",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('today', d.toISOString().slice(0, 10));",
+                      "  }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              }
+            }
+          ]
+        },
         {
           "name": "Crear egreso",
           "description": "POST /api/egresos responde 201 con `comprobante` que empieza en `EGR-`; guarda `egresoId`.",
@@ -4558,8 +4716,117 @@
     },
     {
       "name": "06 · Reportes",
-      "description": "Los cinco reportes XLSX por el gateway (ESP-04 §4.6, ESP-09 §4.6). Cada petición valida 200, el MIME de XLSX, `Content-Disposition` de tipo attachment con nombre de archivo y que el cuerpo sea un binario no vacío.",
+      "description": "Los cinco reportes XLSX por el gateway (ESP-04 §4.6, ESP-09 §4.6). Empieza con «Preparación» para obtener el token. Cada petición valida 200, el MIME de XLSX, `Content-Disposition` de tipo attachment con nombre de archivo y que el cuerpo sea un binario no vacío. La carpeta no crea datos: se puede correr dos veces seguidas.",
       "item": [
+        {
+          "name": "Preparación",
+          "description": "Obtiene el token de administrador y fija `today` y `period`, para que «06 · Reportes» se pueda ejecutar sola, sin depender de otra carpeta (ESP-09 §8).",
+          "item": [
+            {
+              "name": "Login administrador",
+              "description": "POST /api/auth/login con `admin`; guarda `token`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login devuelve 200', () => pm.response.to.have.status(200));",
+                      "let body = {};",
+                      "try { body = pm.response.json(); } catch (e) { body = {}; }",
+                      "pm.test('El rol es ADMIN', () => pm.expect(body.rol).to.eql('ADMIN'));",
+                      "if (body.token) {",
+                      "pm.collectionVariables.set('token', body.token);",
+                      "// El entorno declara las variables vacias y tiene prioridad: se sincroniza.",
+                      "if (pm.environment.name) {",
+                      "  pm.environment.set('token', body.token);",
+                      "}",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usuario\": \"admin\",\n  \"password\": \"Admin123*\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Preparar fechas",
+              "description": "Fija `today` y `period` con la fecha local si no vinieron del prerequest de la colección.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);",
+                      "pm.test('Fecha local disponible', () => pm.expect(d.toISOString().slice(0, 10)).to.match(/^\\d{4}-\\d{2}-\\d{2}$/));",
+                      "if (!pm.collectionVariables.get('period')) {",
+                      "pm.collectionVariables.set('period', d.toISOString().slice(0, 7));",
+                      "// El entorno declara las variables vacias y tiene prioridad: se sincroniza.",
+                      "if (pm.environment.name) {",
+                      "  pm.environment.set('period', d.toISOString().slice(0, 7));",
+                      "}",
+                      "}",
+                      "if (!pm.collectionVariables.get('today')) {",
+                      "pm.collectionVariables.set('today', d.toISOString().slice(0, 10));",
+                      "// El entorno declara las variables vacias y tiene prioridad: se sincroniza.",
+                      "if (pm.environment.name) {",
+                      "  pm.environment.set('today', d.toISOString().slice(0, 10));",
+                      "}",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              }
+            }
+          ]
+        },
         {
           "name": "Movimientos diarios",
           "description": "GET /api/reportes/movimientos-diarios?fecha={{today}}",
