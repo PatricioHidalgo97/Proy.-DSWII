@@ -260,16 +260,31 @@ inconsistente.
 
 | Plan | Tema | Especificaciones base | Depende de |
 |---|---|---|---|
-| PLAN-00 | Preparación, contratos y bases de datos | ESP-02, ESP-06 | — |
-| PLAN-01 | API Gateway | ESP-07 | PLAN-00 |
-| PLAN-02 | identity-service | ESP-05 | PLAN-00, PLAN-01 |
-| PLAN-03 | catalog-service | ESP-03, ESP-04 | PLAN-00, PLAN-01 |
-| PLAN-04 | cash-service | ESP-03, ESP-04 | PLAN-00, PLAN-01, PLAN-03 |
-| PLAN-05 | Frontend y contrato | ESP-10 | PLAN-01 |
-| PLAN-06 | OpenAPI, Postman y cierre | ESP-08, ESP-09 | PLAN-02, PLAN-03, PLAN-04 |
+| PLAN-00 | Fundaciones, correcciones documentales y línea base del contrato | ESP-02, ESP-06, ESP-08, ESP-09, ESP-13 | — |
+| PLAN-01 | API Gateway y traslado del frontend al gateway | ESP-05, ESP-07, ESP-10, ESP-11 | PLAN-00 |
+| PLAN-02 | identity-service | ESP-03, ESP-04, ESP-05, ESP-08 | PLAN-00, PLAN-01 |
+| PLAN-03 | catalog-service | ESP-01, ESP-03, ESP-04, ESP-05, ESP-08 | PLAN-00, PLAN-01 |
+| PLAN-04 | cash-service: cuentas por cobrar, recibos y correlativos | ESP-03, ESP-04, ESP-05, ESP-08 | PLAN-00, PLAN-01, PLAN-03 |
+| PLAN-05 | cash-service: tesorería, egresos y reportes | ESP-03, ESP-04, ESP-08 | PLAN-04 |
+| PLAN-06 | Contrato consolidado y Swagger agregado | ESP-04, ESP-07, ESP-08 | PLAN-02, PLAN-03, PLAN-05 |
+| PLAN-07 | Postman completo, regresión y demostración | ESP-00, ESP-04, ESP-09, ESP-11, ESP-13 | PLAN-06 |
 
 Esta tabla es la referencia de secuencia. Cada plan se escribe en su propio
 archivo cuando corresponda.
+
+### 8.3 Desviaciones respecto de la secuencia original
+
+La versión anterior de esta tabla preveía siete planes. La secuencia vigente
+tiene ocho, por tres motivos que se apoyan en las propias especificaciones:
+
+| Cambio | Motivo | Referencia |
+|---|---|---|
+| El frontend se integra al plan del gateway | Solo cambian dos archivos y el frontend se traslada en el Estado 1 del strangler | ESP-10 §3.3, ESP-11 §2.2 |
+| Caja se parte en cobranza y tesorería | Caja concentra 25 de los 52 endpoints; el punto de corte ya está documentado | ESP-01 §7, ESP-11 §4.3 |
+| OpenAPI se cierra por servicio, no al final | La definición de terminado exige que cada servicio cierre con su contrato exportado | ESP-13 §6 |
+
+La regla que se mantiene es la misma: ningún plan decide arquitectura y todos
+citan los IDs que aplican.
 
 ---
 
@@ -277,7 +292,14 @@ archivo cuando corresponda.
 
 | Plan | Archivo | Estado | Depende de |
 |---|---|---|---|
-| PLAN-00 | _pendiente_ | No escrito | — |
+| PLAN-00 | [00-fundaciones-y-linea-base.md](00-fundaciones-y-linea-base.md) | Escrito | — |
+| PLAN-01 | [01-api-gateway-y-frontend.md](01-api-gateway-y-frontend.md) | Escrito | PLAN-00 |
+| PLAN-02 | [02-identity-service.md](02-identity-service.md) | Escrito | PLAN-00, PLAN-01 |
+| PLAN-03 | [03-catalog-service.md](03-catalog-service.md) | Escrito | PLAN-00, PLAN-01 |
+| PLAN-04 | [04-cash-service-cobranza.md](04-cash-service-cobranza.md) | Escrito | PLAN-00, PLAN-01, PLAN-03 |
+| PLAN-05 | [05-cash-service-tesoreria-reportes.md](05-cash-service-tesoreria-reportes.md) | Escrito | PLAN-04 |
+| PLAN-06 | [06-contrato-y-swagger-agregado.md](06-contrato-y-swagger-agregado.md) | Escrito | PLAN-02, PLAN-03, PLAN-05 |
+| PLAN-07 | [07-postman-regresion-y-demo.md](07-postman-regresion-y-demo.md) | Escrito | PLAN-06 |
 
 > El estado solo puede ser: `No escrito`, `Escrito`, `En ejecución`, `Cerrado`
 > o `Bloqueado`. Un plan `Bloqueado` indica la precondición que falta.
