@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.cibertec.gestion.security.AuthIntegrationTest
--------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.667 s -- in com.cibertec.gestion.security.AuthIntegrationTest
