@@ -302,7 +302,7 @@ citan los IDs que aplican.
 | PLAN-00 | [00-fundaciones-y-linea-base.md](00-fundaciones-y-linea-base.md) | Cerrado | — |
 | PLAN-01 | [01-api-gateway-y-frontend.md](01-api-gateway-y-frontend.md) | Cerrado | PLAN-00 |
 | PLAN-02 | [02-identity-service.md](02-identity-service.md) | Cerrado | PLAN-00, PLAN-01 |
-| PLAN-03 | [03-catalog-service.md](03-catalog-service.md) | Escrito | PLAN-00, PLAN-01 |
+| PLAN-03 | [03-catalog-service.md](03-catalog-service.md) | Cerrado | PLAN-00, PLAN-01 |
 | PLAN-04 | [04-cash-service-cobranza.md](04-cash-service-cobranza.md) | Escrito | PLAN-00, PLAN-01, PLAN-03 |
 | PLAN-05 | [05-cash-service-tesoreria-reportes.md](05-cash-service-tesoreria-reportes.md) | Escrito | PLAN-04 |
 | PLAN-06 | [06-contrato-y-swagger-agregado.md](06-contrato-y-swagger-agregado.md) | Escrito | PLAN-02, PLAN-03, PLAN-05 |
