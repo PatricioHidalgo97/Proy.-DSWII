@@ -86,6 +86,11 @@ public class CatalogoClient {
         });
     }
 
+    public List<BancoRemoto> listBancos() {
+        return getList("/api/bancos", new ParameterizedTypeReference<List<BancoRemoto>>() {
+        });
+    }
+
     private <T> T get(String path, Class<T> type, Object... uriVariables) {
         try {
             return request(path, uriVariables).body(type);
