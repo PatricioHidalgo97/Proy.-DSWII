@@ -1,0 +1,147 @@
+{
+  "info": {
+    "name": "Sistema de Gestión — Microservicios",
+    "description": "Colección del flujo completo a través del API Gateway. En PLAN-00 solo existen las carpetas «00 · Salud» y «01 · Autenticación»; el resto crece por servicio según ESP-09 §3.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);",
+          "pm.collectionVariables.set('today', d.toISOString().slice(0, 10));",
+          "pm.collectionVariables.set('period', d.toISOString().slice(0, 7));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:9101/api" },
+    { "key": "identityUrl", "value": "http://localhost:9102/api" },
+    { "key": "catalogUrl", "value": "http://localhost:9103/api" },
+    { "key": "cashUrl", "value": "http://localhost:9104/api" },
+    { "key": "token", "value": "" },
+    { "key": "tokenOperador", "value": "" },
+    { "key": "socioId", "value": "" },
+    { "key": "giroId", "value": "" },
+    { "key": "puestoId", "value": "" },
+    { "key": "puestoVacioId", "value": "" },
+    { "key": "servicioPuestoId", "value": "" },
+    { "key": "servicioConsumoId", "value": "" },
+    { "key": "servicioSocioId", "value": "" },
+    { "key": "bancoId", "value": "" },
+    { "key": "cuentaPuestoId", "value": "" },
+    { "key": "cuentaSocioId", "value": "" },
+    { "key": "reciboId", "value": "" },
+    { "key": "egresoId", "value": "" },
+    { "key": "today", "value": "" },
+    { "key": "period", "value": "" },
+    { "key": "gatewayReady", "value": "false" }
+  ],
+  "item": [
+    {
+      "name": "00 · Salud",
+      "description": "Health del gateway y de los servicios. El health del gateway queda pendiente hasta PLAN-01.",
+      "item": [
+        {
+          "name": "Health del gateway (pendiente PLAN-01)",
+          "description": "PENDIENTE hasta PLAN-01: el API Gateway aún no existe. El ítem se salta mientras la variable de colección gatewayReady no sea 'true'.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('gatewayReady') !== 'true') {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health del gateway responde UP', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('UP');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/../../actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["..", "..", "actuator", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 · Autenticación",
+      "description": "Login admin, login operador, usuario actual y login inválido (ESP-09 §4.1).",
+      "item": [
+        {
+          "name": "Login administrador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login correcto', () => pm.response.to.have.status(200));",
+                  "let body = {};",
+                  "try {",
+                  "  body = pm.response.json();",
+                  "} catch (e) {",
+                  "  body = {};",
+                  "}",
+                  "pm.test('Rol ADMIN', () => pm.expect(body.rol).to.eql('ADMIN'));",
+                  "pm.test('Devuelve token', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "if (body.token) {",
+                  "  pm.collectionVariables.set('token', body.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"password\": \"Admin123*\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# Dependencias y artefactos de build — no se versionan (ESP-13 §9)
+.env
+node_modules/
+target/
+data/
+
+# Entornos de IDE
+.idea/
+*.iml
+
+# Distribución del frontend
+dist/
+
+# Logs
+*.log
