@@ -10,24 +10,13 @@ import java.util.List;
  * Proyección de cuenta por cobrar (ESP-04 §5.4). Los anidamientos se construyen
  * exclusivamente desde los snapshots: nunca se consulta catálogo al leer.
  *
- * <p><b>Desviación conocida (CA-02 de PLAN-04).</b> El esquema de
- * {@code gestion_cash} guarda del puesto {@code puesto_numero},
- * {@code puesto_nombre_inquilino}, {@code puesto_giro_nombre},
- * {@code puesto_socio_codigo}, {@code puesto_socio_nombres} y
- * {@code puesto_socio_apellidos}, pero no los identificadores del socio ni del
- * giro del puesto: ESP-03 §4.3 no los incluye y la migración
- * {@code V1__creacion_tesoreria.sql} es inmutable. Por eso
- * {@code puesto.socio.id} y {@code puesto.giro.id} se serializan como
- * {@code null}.</p>
- *
- * <p>No se resuelven al leer: consultar catálogo en un listado rompería
- * ESP-03 §5 y §8 (el histórico debe verse con catálogo caído) y deducirlos del
- * nombre o del código sería adivinar. Los nombres de campo se conservan y los
- * {@code null} no se omiten (ESP-04 §7.5), así que la forma de ESP-04 §5.4 se
- * mantiene intacta salvo esos dos valores. Cerrar la brecha exige una migración
- * nueva con {@code puesto_socio_id} y {@code puesto_giro_id} y rellenarlas en
- * el alta; queda fuera de este plan porque prohíbe tocar
- * {@code database/flyway/cash/**}.</p>
+ * <p>Los identificadores del socio y del giro del puesto forman parte del
+ * snapshot y se leen de {@code puesto_socio_id} y {@code puesto_giro_id}, que
+ * añade la migración {@code V5__snapshot_ids_puesto.sql} y que el alta escribe
+ * desde {@code PuestoRemoto}. Cuando el puesto o su socio ya no existen en el
+ * catálogo, el id es {@code null} y el snapshot de texto sigue informado
+ * (ESP-03 §10); los nombres de campo y los {@code null} explícitos se conservan
+ * (ESP-04 §7.5).</p>
  */
 public final class CuentaCobrarMapper {
 
@@ -42,11 +31,11 @@ public final class CuentaCobrarMapper {
                 entity.getPuestoNombreInquilino(),
                 entity.getPuestoSocioNombres() == null && entity.getPuestoSocioApellidos() == null
                         ? null
-                        : new SocioAnidado(null,
+                        : new SocioAnidado(entity.getPuestoSocioId(),
                         entity.getPuestoSocioCodigo(),
                         entity.getPuestoSocioNombres(),
                         entity.getPuestoSocioApellidos()),
-                new GiroAnidado(null, entity.getPuestoGiroNombre())
+                new GiroAnidado(entity.getPuestoGiroId(), entity.getPuestoGiroNombre())
         );
         SocioAnidado socio = entity.getSocioId() == null ? null : new SocioAnidado(
                 entity.getSocioId(),

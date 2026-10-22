@@ -27,13 +27,13 @@ import java.util.List;
 /**
  * Once operaciones de caja (ESP-04 §4.3, §5.4).
  *
- * <p>Desviación documentada de ESP-04 §5.4: el esquema de {@code gestion_cash}
- * guarda del puesto su número, el inquilino, el nombre del giro y el
- * código/nombres/apellidos de su socio, pero no los identificadores del socio
- * ni del giro del puesto (ESP-03 §4.3). Por eso {@code puesto.socio.id} y
- * {@code puesto.giro.id} viajan como {@code null}; el resto de la forma, los
- * nombres de campo y los {@code null} explícitos se conservan (ESP-04 §7.5).
- * Cerrarlo requiere una migración nueva que este plan no puede crear.</p>
+ * <p>La cuenta publica {@code puesto.socio.id} y {@code puesto.giro.id} desde
+ * el snapshot: la migración {@code V5__snapshot_ids_puesto.sql} añade
+ * {@code puesto_socio_id} y {@code puesto_giro_id} a {@code gestion_cash} y las
+ * rellena en los documentos ya emitidos, y el alta las escribe desde
+ * {@code PuestoRemoto} (ESP-03 §4.3, §10). Los nombres de campo y los
+ * {@code null} explícitos se conservan (ESP-04 §7.5), y el listado no consulta
+ * catálogo.</p>
  */
 @RestController
 @RequestMapping("/api/cuentas")
