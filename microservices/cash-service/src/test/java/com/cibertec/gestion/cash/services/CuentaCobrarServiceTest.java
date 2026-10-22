@@ -221,6 +221,57 @@ class CuentaCobrarServiceTest {
         assertThat(cuentaRepository.count()).isEqualTo(antes);
     }
 
+    /**
+     * PLAN-09 T-06: el alta persiste los ids del socio y del giro del puesto que
+     * llegan en {@link PuestoRemoto} y los devuelve en la respuesta (ESP-04
+     * §5.4). Sin ellos, {@code puesto.socio.id} y {@code puesto.giro.id} salían
+     * en {@code null} (CA-02 de PLAN-04).
+     */
+    @Test
+    void debePersistirLosIdsAnidadosDelPuesto() {
+        CuentaCobrarMapper.CuentaCobrarResponse creada = cuentaService.create(request());
+
+        // Los ids que publica el PuestoRemoto mockeado por el catálogo.
+        Long giroEsperado = puesto().giro().id();
+        Long socioEsperado = puesto().socio().id();
+
+        CuentaCobrarEntity persistida = cuentaRepository.findById(creada.id()).orElseThrow();
+        assertThat(persistida.getPuestoGiroId()).isEqualTo(giroEsperado);
+        assertThat(persistida.getPuestoSocioId()).isEqualTo(socioEsperado);
+
+        assertThat(creada.puesto()).isNotNull();
+        assertThat(creada.puesto().socio()).isNotNull();
+        assertThat(creada.puesto().socio().id()).isNotNull().isEqualTo(socioEsperado);
+        assertThat(creada.puesto().giro()).isNotNull();
+        assertThat(creada.puesto().giro().id()).isNotNull().isEqualTo(giroEsperado);
+    }
+
+    /**
+     * PLAN-09 T-06: una cuenta por socio no tiene puesto, así que las dos
+     * columnas nuevas quedan {@code null} y {@code puesto()} viaja en
+     * {@code null} (ESP-03 §10).
+     */
+    @Test
+    void cuentaPorSocioNoDebeTraerIdsDePuesto() {
+        CuentaRequest solicitud = new CuentaRequest();
+        solicitud.setPeriodo(PERIODO + "-" + periodoSeq.incrementAndGet());
+        solicitud.setMonto(new BigDecimal("50.00"));
+        solicitud.setSocioId(SOCIO_ID);
+        solicitud.setServicioId(SERVICIO_ID);
+        when(catalogoClient.getServicio(anyLong())).thenReturn(
+                new ServicioRemoto(SERVICIO_ID, "Cuota ordinaria de socio", "PEN", "SOCIO",
+                        false, new BigDecimal("50.00"), true));
+
+        CuentaCobrarMapper.CuentaCobrarResponse creada = cuentaService.create(solicitud);
+
+        assertThat(creada.puesto()).isNull();
+
+        CuentaCobrarEntity persistida = cuentaRepository.findById(creada.id()).orElseThrow();
+        assertThat(persistida.getPuestoId()).isNull();
+        assertThat(persistida.getPuestoGiroId()).isNull();
+        assertThat(persistida.getPuestoSocioId()).isNull();
+    }
+
     // --- utilidades -------------------------------------------------------
 
     private Callable<String> pagoConcurrente(Long cuentaId, CountDownLatch listos, CountDownLatch salida) {
