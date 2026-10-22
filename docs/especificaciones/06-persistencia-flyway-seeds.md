@@ -37,18 +37,34 @@ database/
 
 ```properties
 spring.flyway.enabled=true
-spring.flyway.locations=filesystem:../database/flyway/auth
+spring.flyway.locations=filesystem:../../database/flyway/{servicio}
 spring.flyway.baseline-on-migrate=false
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-Ajustar `locations` según el servicio (`auth`, `catalog`, `cash`).
+Ajustar `{servicio}` según el servicio (`auth`, `catalog`, `cash`).
 
 ### 3.1 Por qué `filesystem` y no `classpath`
 
 - Centraliza los scripts en `database/`, donde el equipo y el profesor los
   pueden revisar.
 - Evita duplicar los mismos SQL dentro de cada `src/main/resources`.
+
+La ruta `filesystem:../../database/flyway/{servicio}` es **relativa al
+directorio del servicio**, que es exactamente donde ESP-06 §6.1 ejecuta
+`mvn spring-boot:run`:
+
+```text
+Proy.-DSWII/                 <- raíz del repositorio
+├─ database/flyway/auth/     <- scripts
+└─ microservices/
+   └─ identity-service/      <- directorio de trabajo de mvn
+      └─ ../..  ->  raíz del repositorio
+```
+
+Por eso los servicios se arrancan desde su propia carpeta: si se ejecutara
+Maven desde la raíz, `../../` apuntaría fuera del repositorio y Flyway no
+encontraría los scripts.
 
 ### 3.2 Alternativa empaquetada
 
