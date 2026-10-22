@@ -73,6 +73,34 @@ Si la evidencia que recibiste es insuficiente para ubicar la causa raíz, **no
 adivines**: pide a la orquestadora los datos que faltan, listándolos uno por uno.
 Un plan construido sobre una hipótesis no verificada es peor que no tener plan.
 
+# Antes de planificar: barrido de coherencia del plan original
+
+Un plan de arreglo reparte un defecto concreto. Pero el defecto suele haber sido
+**una incoherencia que las especificaciones ya mostraban** y que nadie detectó
+antes de escribir el código. Por eso, antes de escribir una sola tarea, haz este
+barrido del plan original y de las especificaciones que cita:
+
+- **Cada criterio de aceptación es realizable con el estado actual del
+  repositorio.** Un criterio que exige un dato, una columna o un campo que el
+  esquema no tiene es un criterio imposible. Verifícalo contra el esquema real,
+  no contra lo que dice el plan. Este fue el defecto de PLAN-04 (exigía
+  `puesto.socio.id` sin columna que lo guardara) y el de PLAN-02 (no incluía
+  `/actuator/health` en la lista de rutas públicas y rompía el CA-03 de PLAN-00).
+- **Cada tarea produce algo verificable con lo que hay.** Si la verificación de
+  una tarea necesita un artefacto que ninguna tarea anterior produce, el plan
+  tiene un hueco.
+- **Los criterios no se contradicen entre sí.** Dos criterios que exigen
+  comportamientos distintos del mismo caso son una contradicción, no una
+  dificultad.
+- **El plan no choca con planes ya cerrados.** Un plan que rompe un criterio de
+  un plan `Cerrado` en el índice §9 es un plan defectuoso.
+- **Las rutas, puertos y variables que el plan usa existen en ESP-02**, y los
+  nombres de campo que exige coinciden con `docs/contract/baseline-contrato.md`.
+
+Si encuentras una incoherencia, **no la parchees en silencio**: es el objeto
+principal del plan de arreglo. Cítala en §2 o §3 con el ID exacto del criterio
+afectado y con la evidencia que la demuestra.
+
 # Método
 
 ## 1. Diagnosticar antes de planificar
