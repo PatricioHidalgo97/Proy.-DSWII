@@ -48,28 +48,18 @@
     { "key": "egresoId", "value": "" },
     { "key": "today", "value": "" },
     { "key": "period", "value": "" },
-    { "key": "gatewayReady", "value": "false" }
+    { "key": "gatewayHealthUrl", "value": "http://localhost:9101/actuator/health" },
+    { "key": "gatewayReady", "value": "true" }
   ],
   "item": [
     {
       "name": "00 · Salud",
-      "description": "Health del gateway y de los servicios. El health del gateway queda pendiente hasta PLAN-01.",
+      "description": "Health del gateway y de los servicios (ESP-09 §3, ESP-07 §7).",
       "item": [
         {
-          "name": "Health del gateway (pendiente PLAN-01)",
-          "description": "PENDIENTE hasta PLAN-01: el API Gateway aún no existe. El ítem se salta mientras la variable de colección gatewayReady no sea 'true'.",
+          "name": "Health del gateway",
+          "description": "Verifica que el API Gateway responde UP en /actuator/health (ESP-07 §7).",
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('gatewayReady') !== 'true') {",
-                  "  pm.execution.skipRequest();",
-                  "}"
-                ]
-              }
-            },
             {
               "listen": "test",
               "script": {
@@ -87,11 +77,7 @@
             "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/../../actuator/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["..", "..", "actuator", "health"]
-            }
+            "url": "{{gatewayHealthUrl}}"
           }
         }
       ]

@@ -66,7 +66,8 @@ reactivo.
 
 - No se usa `StripPrefix`: los servicios conservan sus rutas `/api/...`.
 - El orden de las rutas es irrelevante porque los prefijos no se solapan.
-- Toda ruta no listada devuelve 404 del gateway.
+- Toda ruta no listada devuelve 404 del gateway **salvo durante la migración**,
+  donde la ruta `monolito` la absorbe; esa ruta se retira al cerrar la fase 3.
 
 ## 5. Configuración de referencia
 

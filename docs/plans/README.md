@@ -293,7 +293,7 @@ citan los IDs que aplican.
 | Plan | Archivo | Estado | Depende de |
 |---|---|---|---|
 | PLAN-00 | [00-fundaciones-y-linea-base.md](00-fundaciones-y-linea-base.md) | Cerrado | — |
-| PLAN-01 | [01-api-gateway-y-frontend.md](01-api-gateway-y-frontend.md) | Escrito | PLAN-00 |
+| PLAN-01 | [01-api-gateway-y-frontend.md](01-api-gateway-y-frontend.md) | Cerrado | PLAN-00 |
 | PLAN-02 | [02-identity-service.md](02-identity-service.md) | Escrito | PLAN-00, PLAN-01 |
 | PLAN-03 | [03-catalog-service.md](03-catalog-service.md) | Escrito | PLAN-00, PLAN-01 |
 | PLAN-04 | [04-cash-service-cobranza.md](04-cash-service-cobranza.md) | Escrito | PLAN-00, PLAN-01, PLAN-03 |
