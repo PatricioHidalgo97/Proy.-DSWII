@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Sistema de Gestión — Microservicios",
-    "description": "Colección del flujo completo a través del API Gateway. «00 · Salud» y «01 · Autenticación» desde PLAN-00/PLAN-02; «02 · Catálogos» desde PLAN-03. El resto crece por servicio según ESP-09 §3.",
+    "description": "Colección del flujo completo a través del API Gateway. «00 · Salud» y «01 · Autenticación» desde PLAN-00/PLAN-02; «02 · Catálogos» desde PLAN-03; «03 · Caja» y «04 · Recibos» desde PLAN-04. El resto crece por servicio según ESP-09 §3.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -21,8 +21,22 @@
         "type": "text/javascript",
         "exec": [
           "const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);",
-          "pm.collectionVariables.set('today', d.toISOString().slice(0, 10));",
-          "pm.collectionVariables.set('period', d.toISOString().slice(0, 7));"
+          "const addMonths = (date, months) => {",
+          "  const copia = new Date(date.getTime());",
+          "  copia.setMonth(copia.getMonth() + months);",
+          "  return copia;",
+          "};",
+          "const setVar = (key, value) => {",
+          "  pm.collectionVariables.set(key, value);",
+          "  // El entorno declara las variables vacias y tiene prioridad: se sincroniza.",
+          "  if (pm.environment.name) {",
+          "    pm.environment.set(key, value);",
+          "  }",
+          "};",
+          "setVar('today', d.toISOString().slice(0, 10));",
+          "setVar('period', d.toISOString().slice(0, 7));",
+          "setVar('periodGen', addMonths(d, 1).toISOString().slice(0, 7));",
+          "setVar('periodLote', addMonths(d, 2).toISOString().slice(0, 7));"
         ]
       }
     }
@@ -115,6 +129,38 @@
     {
       "key": "gatewayReady",
       "value": "true"
+    },
+    {
+      "key": "periodGen",
+      "value": ""
+    },
+    {
+      "key": "periodLote",
+      "value": ""
+    },
+    {
+      "key": "cuentaPuestoGenId",
+      "value": ""
+    },
+    {
+      "key": "cuentaSocioGenId",
+      "value": ""
+    },
+    {
+      "key": "cuentaLoteAId",
+      "value": ""
+    },
+    {
+      "key": "cuentaLoteBId",
+      "value": ""
+    },
+    {
+      "key": "reciboBancarioId",
+      "value": ""
+    },
+    {
+      "key": "reciboExternoId",
+      "value": ""
     }
   ],
   "item": [
@@ -1964,6 +2010,1995 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Caja",
+      "description": "Once operaciones de cuentas por cobrar por el gateway (ESP-04 §4.3, ESP-09 §4.3, §4.8). Crea su propio catálogo de prueba y lo limpia al final para poder ejecutarse sola y dos veces seguidas.",
+      "item": [
+        {
+          "name": "Preparación",
+          "description": "Crea el catálogo mínimo que consume caja y lo elimina en «Limpieza». Es propio de esta carpeta porque «02 · Catálogos» borra sus datos al terminar y así la carpeta se puede ejecutar sola (ESP-09 §7, §8).",
+          "item": [
+            {
+              "name": "Crear giro de caja",
+              "description": "POST /api/giros con sufijo PM; guarda `giroId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear giro devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('giroId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('giroId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Conserva el nombre del giro', () => pm.expect(creado.nombre).to.eql('Giro PM Caja'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/giros",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "giros"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Giro PM Caja\",\n  \"descripcion\": \"Giro de prueba de caja\",\n  \"activo\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear socio de caja",
+              "description": "POST /api/socios con sufijo PM; guarda `socioId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear socio devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('socioId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('socioId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Conserva el codigo del socio', () => pm.expect(creado.codigo).to.eql('SOC-PM-CAJA'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/socios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "socios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"codigo\": \"SOC-PM-CAJA\",\n  \"nombres\": \"Prueba\",\n  \"apellidos\": \"Caja\",\n  \"accion\": \"A-001\",\n  \"etapa\": 1,\n  \"fechaNacimiento\": \"1990-01-01\",\n  \"activo\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear puesto de caja",
+              "description": "POST /api/puestos con socio y giro anidados; guarda `puestoId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear puesto devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('puestoId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('puestoId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Conserva socio y giro anidados (ESP-04 5.3)', () => {",
+                      "  pm.expect(creado.socio).to.not.be.null;",
+                      "  pm.expect(creado.giro).to.not.be.null;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/puestos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "puestos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"numero\": \"P-PM-CAJA\",\n  \"nombreInquilino\": \"Inquilino Caja\",\n  \"fechaInicio\": \"2026-01-01\",\n  \"fechaFin\": null,\n  \"socioId\": \"{{socioId}}\",\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear puesto sin socio",
+              "description": "POST /api/puestos sin socio; guarda `puestoVacioId` y se usa para el pago en lote.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear puesto sin socio devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('puestoVacioId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('puestoVacioId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('El socio se serializa como null', () => pm.expect(creado.socio).to.be.null);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/puestos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "puestos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"numero\": \"P-PM-CAJA2\",\n  \"nombreInquilino\": \"Inquilino Caja 2\",\n  \"fechaInicio\": \"2026-01-01\",\n  \"fechaFin\": null,\n  \"socioId\": null,\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear servicio de puesto",
+              "description": "POST /api/servicios con cargoA=PUESTO; guarda `servicioPuestoId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear servicio de puesto devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('servicioPuestoId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('servicioPuestoId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Esta configurado para puestos', () => pm.expect(creado.cargoA).to.eql('PUESTO'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/servicios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "servicios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Servicio PM Caja Puesto\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 80,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"PUESTO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear servicio de socio",
+              "description": "POST /api/servicios con cargoA=SOCIO; guarda `servicioSocioId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear servicio de socio devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('servicioSocioId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('servicioSocioId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Esta configurado para socios', () => pm.expect(creado.cargoA).to.eql('SOCIO'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/servicios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "servicios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Servicio PM Caja Socio\",\n  \"recurrencia\": \"ANUAL\",\n  \"costo\": 50,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"SOCIO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear banco de caja",
+              "description": "POST /api/bancos; guarda `bancoId` para el canje bancario.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear banco devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creado = {};",
+                      "try { creado = pm.response.json(); } catch (e) { creado = {}; }",
+                      "if (creado.id) {",
+                      "  pm.collectionVariables.set('bancoId', creado.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('bancoId', creado.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Conserva el CCI', () => pm.expect(creado.cci).to.eql('PMC000000000000000001'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bancos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bancos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Banco PM Caja\",\n  \"numeroCuenta\": \"PM-CAJA-0001\",\n  \"cci\": \"PMC000000000000000001\",\n  \"moneda\": \"PEN\",\n  \"activo\": true\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cuentas individuales",
+          "description": "Alta individual por puesto y por socio, con el caso de duplicado (ESP-09 §4.3).",
+          "item": [
+            {
+              "name": "Crear cuenta por puesto",
+              "description": "POST /api/cuentas con `puestoId`; guarda `cuentaPuestoId`. Devuelve 201 con `estado = PENDIENTE` y `puesto` y `servicio` anidados.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear cuenta devuelve 201 con estado PENDIENTE', () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(pm.response.json().estado).to.eql('PENDIENTE');",
+                      "});",
+                      "let creada = {};",
+                      "try { creada = pm.response.json(); } catch (e) { creada = {}; }",
+                      "if (creada.id) {",
+                      "  pm.collectionVariables.set('cuentaPuestoId', creada.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('cuentaPuestoId', creada.id);",
+                      "  }",
+                      "}",
+                      "pm.test('La cuenta devuelve puesto y servicio anidados no nulos', () => {",
+                      "  pm.expect(creada.puesto).to.not.be.null;",
+                      "  pm.expect(creada.servicio).to.not.be.null;",
+                      "  pm.expect(creada.puesto.numero).to.eql('P-PM-CAJA');",
+                      "  pm.expect(creada.socio).to.be.null;",
+                      "});",
+                      "pm.test('El puesto conserva su socio y su giro', () => {",
+                      "  pm.expect(creada.puesto.socio).to.not.be.null;",
+                      "  pm.expect(creada.puesto.socio.codigo).to.eql('SOC-PM-CAJA');",
+                      "  pm.expect(creada.puesto.giro).to.not.be.null;",
+                      "  pm.expect(creada.puesto.giro.nombre).to.eql('Giro PM Caja');",
+                      "});",
+                      "pm.test('El puesto trae el id de su giro', () => {",
+                      "  // Se compara como numero para no depender del tipo con que la",
+                      "  // variable de coleccion se guarde (CA-02 de PLAN-04, ESP-04 5.4).",
+                      "  pm.expect(Number(creada.puesto.giro.id)).to.eql(Number(pm.collectionVariables.get('giroId')));",
+                      "});",
+                      "pm.test('El puesto trae el id de su socio', () => {",
+                      "  pm.expect(Number(creada.puesto.socio.id)).to.eql(Number(pm.collectionVariables.get('socioId')));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{period}}\",\n  \"monto\": 80,\n  \"puestoId\": \"{{puestoId}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Crear cuenta por socio",
+              "description": "POST /api/cuentas con `socioId`; guarda `cuentaSocioId` y se usa en el canje bancario.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Crear cuenta de socio devuelve 201', () => pm.response.to.have.status(201));",
+                      "let creada = {};",
+                      "try { creada = pm.response.json(); } catch (e) { creada = {}; }",
+                      "if (creada.id) {",
+                      "  pm.collectionVariables.set('cuentaSocioId', creada.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('cuentaSocioId', creada.id);",
+                      "  }",
+                      "}",
+                      "pm.test('Conserva el socio anidado y el puesto nulo', () => {",
+                      "  pm.expect(creada.socio).to.not.be.null;",
+                      "  pm.expect(String(creada.socio.id)).to.eql(String(pm.collectionVariables.get('socioId')));",
+                      "  pm.expect(creada.puesto).to.be.null;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{period}}\",\n  \"monto\": 50,\n  \"socioId\": \"{{socioId}}\",\n  \"servicioId\": \"{{servicioSocioId}}\"\n}"
+                }
+              }
+            },
+            {
+              "name": "Cuenta duplicada devuelve 400",
+              "description": "Repite el alta por puesto con el mismo período, servicio y destinatario (ESP-09 §4.3).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Cuenta duplicada devuelve 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Mensaje de duplicado por periodo', () => pm.expect(pm.response.json().message).to.eql('Ya existe una cuenta para ese período, servicio y destinatario'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{period}}\",\n  \"monto\": 80,\n  \"puestoId\": \"{{puestoId}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\"\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generación masiva",
+          "description": "POST /api/cuentas/generar/puestos y /generar/socios con listas explícitas, más el duplicado y el lote que alimenta el pago masivo (ESP-09 §4.3).",
+          "item": [
+            {
+              "name": "Generar cuentas por puestos",
+              "description": "Genera una cuenta para el puesto creado en `{{periodGen}}`; guarda `cuentaPuestoGenId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Generar por puestos devuelve 201 con una cuenta', () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                      "});",
+                      "const creadas = pm.response.json();",
+                      "if (creadas[0] && creadas[0].id) {",
+                      "  pm.collectionVariables.set('cuentaPuestoGenId', creadas[0] && creadas[0].id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('cuentaPuestoGenId', creadas[0] && creadas[0].id);",
+                      "  }",
+                      "}",
+                      "pm.test('La cuenta generada trae puesto y servicio', () => {",
+                      "  pm.expect(creadas[0].puesto).to.not.be.null;",
+                      "  pm.expect(creadas[0].servicio).to.not.be.null;",
+                      "  pm.expect(creadas[0].estado).to.eql('PENDIENTE');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/generar/puestos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "generar",
+                    "puestos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{periodGen}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\",\n  \"monto\": 80,\n  \"puestoIds\": [\n    \"{{puestoId}}\"\n  ]\n}"
+                }
+              }
+            },
+            {
+              "name": "Generar cuentas por socios",
+              "description": "Genera una cuenta para el socio creado en `{{periodGen}}`; guarda `cuentaSocioGenId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Generar por socios devuelve 201 con una cuenta', () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                      "});",
+                      "const creadas = pm.response.json();",
+                      "if (creadas[0] && creadas[0].id) {",
+                      "  pm.collectionVariables.set('cuentaSocioGenId', creadas[0] && creadas[0].id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('cuentaSocioGenId', creadas[0] && creadas[0].id);",
+                      "  }",
+                      "}",
+                      "pm.test('La cuenta generada trae socio y puesto nulo', () => {",
+                      "  pm.expect(creadas[0].socio).to.not.be.null;",
+                      "  pm.expect(creadas[0].puesto).to.be.null;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/generar/socios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "generar",
+                    "socios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{periodGen}}\",\n  \"servicioId\": \"{{servicioSocioId}}\",\n  \"monto\": 50,\n  \"socioIds\": [\n    \"{{socioId}}\"\n  ]\n}"
+                }
+              }
+            },
+            {
+              "name": "Generar duplicado devuelve 400",
+              "description": "Repite la generación por puestos del mismo período: ninguna cuenta nueva (ESP-09 §4.3).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Generar duplicado devuelve 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Mensaje de período ya generado', () => pm.expect(pm.response.json().message).to.eql('Las cuentas seleccionadas ya fueron generadas para ese período y servicio'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/generar/puestos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "generar",
+                    "puestos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{periodGen}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\",\n  \"monto\": 80,\n  \"puestoIds\": [\n    \"{{puestoId}}\"\n  ]\n}"
+                }
+              }
+            },
+            {
+              "name": "Generar cuentas para pago en lote",
+              "description": "Genera una cuenta por cada puesto en `{{periodLote}}`; guarda `cuentaLoteAId` y `cuentaLoteBId` para el pago masivo.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Generar lote devuelve 201 con dos cuentas', () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(pm.response.json()).to.have.lengthOf(2);",
+                      "});",
+                      "const creadas = pm.response.json();",
+                      "if (creadas[0] && creadas[0].id) {",
+                      "  pm.collectionVariables.set('cuentaLoteAId', creadas[0] && creadas[0].id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('cuentaLoteAId', creadas[0] && creadas[0].id);",
+                      "  }",
+                      "}",
+                      "if (creadas[1] && creadas[1].id) {",
+                      "  pm.collectionVariables.set('cuentaLoteBId', creadas[1] && creadas[1].id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('cuentaLoteBId', creadas[1] && creadas[1].id);",
+                      "  }",
+                      "}",
+                      "pm.test('Ambas cuentas quedan pendientes', () => {",
+                      "  creadas.forEach(c => pm.expect(c.estado).to.eql('PENDIENTE'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/generar/puestos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "generar",
+                    "puestos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"periodo\": \"{{periodLote}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\",\n  \"monto\": 80,\n  \"puestoIds\": [\n    \"{{puestoId}}\",\n    \"{{puestoVacioId}}\"\n  ]\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultas",
+          "description": "Listado general y por destinatario, con los asserts de contrato de ESP-09 §4.8.",
+          "item": [
+            {
+              "name": "Listar cuentas (contrato ESP-09 4.8)",
+              "description": "GET /api/cuentas; valida los asserts de contrato de ESP-09 §4.8 sobre la cuenta creada. El servicio anidado conserva su nombre y el puesto conserva los ids y el snapshot de texto de su socio y de su giro (ESP-04 §5.4); ningún null se omite (ESP-04 §7.5).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Listar cuentas devuelve 200', () => pm.response.to.have.status(200));",
+                      "const cuentas = pm.response.json();",
+                      "pm.test('Lista es un array que contiene la cuenta creada', () => {",
+                      "  pm.expect(cuentas).to.be.an('array');",
+                      "  pm.expect(cuentas.some(c => String(c.id) === String(pm.collectionVariables.get('cuentaPuestoId')))).to.eql(true);",
+                      "});",
+                      "const cuenta = cuentas.find(c => String(c.id) === String(pm.collectionVariables.get('cuentaPuestoId'))) || cuentas[0];",
+                      "pm.test('Cuenta conserva anidamiento', () => {",
+                      "  pm.expect(cuenta).to.have.property('puesto');",
+                      "  pm.expect(cuenta).to.have.property('socio');",
+                      "  pm.expect(cuenta).to.have.property('servicio');",
+                      "  pm.expect(cuenta).to.have.property('lecturaInicial');",
+                      "  pm.expect(cuenta).to.have.property('costoUnitario');",
+                      "});",
+                      "pm.test('El servicio anidado conserva su nombre', () => {",
+                      "  pm.expect(cuenta.servicio).to.have.property('nombre');",
+                      "  pm.expect(cuenta.servicio.nombre).to.eql('Servicio PM Caja Puesto');",
+                      "});",
+                      "pm.test('Los null no se omiten', () => {",
+                      "  pm.expect(cuenta).to.have.property('lecturaFinal');",
+                      "  pm.expect(cuenta.socio).to.be.null;",
+                      "});",
+                      "pm.test('puesto.giro.id es numerico y mayor que 0', () => {",
+                      "  const giroId = Number(cuenta.puesto.giro.id);",
+                      "  pm.expect(Number.isFinite(giroId) && giroId > 0).to.eql(true);",
+                      "});",
+                      "pm.test('puesto.socio.id es numerico y mayor que 0', () => {",
+                      "  const socioId = Number(cuenta.puesto.socio.id);",
+                      "  pm.expect(Number.isFinite(socioId) && socioId > 0).to.eql(true);",
+                      "});",
+                      "pm.test('El snapshot de texto del puesto se conserva', () => {",
+                      "  // El arreglo no puede sustituir el snapshot de texto por el id.",
+                      "  pm.expect(cuenta.puesto.socio.codigo).to.eql('SOC-PM-CAJA');",
+                      "  pm.expect(cuenta.puesto.giro.nombre).to.eql('Giro PM Caja');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Consultar cuentas por puesto",
+              "description": "GET /api/cuentas/puesto/{puestoId} devuelve el histórico del puesto creado.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Cuentas por puesto devuelve 200', () => pm.response.to.have.status(200));",
+                      "const cuentas = pm.response.json();",
+                      "pm.test('Contiene la cuenta del puesto', () => {",
+                      "  pm.expect(cuentas.some(c => String(c.id) === String(pm.collectionVariables.get('cuentaPuestoId')))).to.eql(true);",
+                      "});",
+                      "pm.test('Todas pertenecen al puesto consultado', () => {",
+                      "  cuentas.forEach(c => pm.expect(String(c.puesto.id)).to.eql(String(pm.collectionVariables.get('puestoId'))));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/puesto/{{puestoId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "puesto",
+                    "{{puestoId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Consultar cuentas por socio",
+              "description": "GET /api/cuentas/socio/{socioId} devuelve el histórico del socio creado.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Cuentas por socio devuelve 200', () => pm.response.to.have.status(200));",
+                      "const cuentas = pm.response.json();",
+                      "pm.test('Contiene la cuenta del socio', () => {",
+                      "  pm.expect(cuentas.some(c => String(c.id) === String(pm.collectionVariables.get('cuentaSocioId')))).to.eql(true);",
+                      "});",
+                      "pm.test('Todas pertenecen al socio consultado', () => {",
+                      "  cuentas.forEach(c => pm.expect(String(c.socio.id)).to.eql(String(pm.collectionVariables.get('socioId'))));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/socio/{{socioId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "socio",
+                    "{{socioId}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exoneración",
+          "description": "Exoneración individual y en lote sobre las cuentas generadas (ESP-09 §4.3).",
+          "item": [
+            {
+              "name": "Exonerar cuenta",
+              "description": "PUT /api/cuentas/{id}/exonerar cambia el estado a EXONERADA.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Exonerar devuelve 200 con estado EXONERADA', () => {",
+                      "  pm.response.to.have.status(200);",
+                      "  pm.expect(pm.response.json().estado).to.eql('EXONERADA');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/{{cuentaPuestoGenId}}/exonerar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "{{cuentaPuestoGenId}}",
+                    "exonerar"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Exonerar cuentas en lote",
+              "description": "PUT /api/cuentas/exonerar-lote devuelve una cuenta exonerada por cada id enviado.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Exonerar en lote devuelve 200', () => pm.response.to.have.status(200));",
+                      "const cuentas = pm.response.json();",
+                      "pm.test('Devuelve una cuenta exonerada por id', () => {",
+                      "  pm.expect(cuentas).to.have.lengthOf(1);",
+                      "  cuentas.forEach(c => pm.expect(c.estado).to.eql('EXONERADA'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/exonerar-lote",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "exonerar-lote"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaIds\": [\n    \"{{cuentaSocioGenId}}\"\n  ]\n}"
+                }
+              }
+            },
+            {
+              "name": "Exoneración en lote vacía devuelve 400",
+              "description": "El lote exige al menos una cuenta; el error trae `errors` por campo (ESP-04 §6).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Lote vacío devuelve 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Devuelve errors por campo', () => pm.expect(pm.response.json()).to.have.property('errors'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/exonerar-lote",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "exonerar-lote"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaIds\": []\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagos y canje",
+          "description": "Pago individual, pago duplicado, pago en lote y canje bancario con recibo (ESP-09 §4.3, §4.4).",
+          "item": [
+            {
+              "name": "Pagar cuenta",
+              "description": "POST /api/cuentas/{id}/pagar emite el recibo; guarda `reciboId` y valida el correlativo.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Pagar devuelve 201', () => pm.response.to.have.status(201));",
+                      "let recibo = {};",
+                      "try { recibo = pm.response.json(); } catch (e) { recibo = {}; }",
+                      "if (recibo.id) {",
+                      "  pm.collectionVariables.set('reciboId', recibo.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('reciboId', recibo.id);",
+                      "  }",
+                      "}",
+                      "pm.test('El correlativo empieza en REC-', () => {",
+                      "  pm.expect(recibo.correlativo).to.be.a('string');",
+                      "  pm.expect(recibo.correlativo.startsWith('REC-')).to.eql(true);",
+                      "});",
+                      "pm.test('La cuenta queda pagada y conserva su servicio', () => {",
+                      "  pm.expect(recibo.cuentaCobrar).to.not.be.null;",
+                      "  pm.expect(recibo.cuentaCobrar.estado).to.eql('PAGADA');",
+                      "  pm.expect(recibo.cuentaCobrar.servicio).to.not.be.null;",
+                      "});",
+                      "pm.test('El usuario del recibo sale del token', () => {",
+                      "  pm.expect(recibo.usuario).to.not.be.null;",
+                      "  pm.expect(recibo.usuario.nombres).to.be.a('string').and.not.empty;",
+                      "  pm.expect(recibo.usuario.apellidos).to.be.a('string').and.not.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/{{cuentaPuestoId}}/pagar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "{{cuentaPuestoId}}",
+                    "pagar"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Pagar dos veces devuelve 400",
+              "description": "Repite el pago de la misma cuenta: la cuenta ya fue pagada (ESP-09 §4.3).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Pagar dos veces devuelve 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Mensaje de cuenta no pendiente', () => pm.expect(pm.response.json().message).to.eql('La cuenta ya fue pagada o exonerada'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/{{cuentaPuestoId}}/pagar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "{{cuentaPuestoId}}",
+                    "pagar"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Pagar en lote",
+              "description": "POST /api/cuentas/pagar-lote emite un recibo por cuenta.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Pagar en lote devuelve 201', () => pm.response.to.have.status(201));",
+                      "const recibos = pm.response.json();",
+                      "pm.test('Devuelve un recibo por cuenta', () => {",
+                      "  pm.expect(recibos).to.have.lengthOf(2);",
+                      "  recibos.forEach(r => pm.expect(r.cuentaCobrar).to.not.be.null);",
+                      "});",
+                      "pm.test('Cada recibo trae correlativo propio', () => {",
+                      "  const correlativos = recibos.map(r => r.correlativo);",
+                      "  correlativos.forEach(c => pm.expect(c.startsWith('REC-')).to.eql(true));",
+                      "  pm.expect(new Set(correlativos).size).to.eql(2);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/pagar-lote",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "pagar-lote"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaIds\": [\n    \"{{cuentaLoteAId}}\",\n    \"{{cuentaLoteBId}}\"\n  ]\n}"
+                }
+              }
+            },
+            {
+              "name": "Canjear cuenta de socio",
+              "description": "POST /api/cuentas/canjear emite un recibo BANCARIO con el snapshot del banco; guarda `reciboBancarioId`.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Canje devuelve 201 con tipo BANCARIO', () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(pm.response.json().tipo).to.eql('BANCARIO');",
+                      "});",
+                      "let recibo = {};",
+                      "try { recibo = pm.response.json(); } catch (e) { recibo = {}; }",
+                      "if (recibo.id) {",
+                      "  pm.collectionVariables.set('reciboBancarioId', recibo.id);",
+                      "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                      "  if (pm.environment.name) {",
+                      "    pm.environment.set('reciboBancarioId', recibo.id);",
+                      "  }",
+                      "}",
+                      "pm.test('El recibo bancario trae banco no nulo', () => {",
+                      "  pm.expect(recibo.banco).to.not.be.null;",
+                      "  pm.expect(recibo.banco.nombre).to.eql('Banco PM Caja');",
+                      "  pm.expect(recibo.fechaDeposito).to.eql(pm.collectionVariables.get('today'));",
+                      "});",
+                      "pm.test('La cuenta del recibo es la del socio', () => {",
+                      "  pm.expect(recibo.cuentaCobrar.socio).to.not.be.null;",
+                      "  pm.expect(recibo.cuentaCobrar.puesto).to.be.null;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cuentas/canjear",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cuentas",
+                    "canjear"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaId\": \"{{cuentaSocioId}}\",\n  \"bancoId\": \"{{bancoId}}\",\n  \"fechaDeposito\": \"{{today}}\"\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Limpieza",
+          "description": "Elimina el catálogo de prueba en orden inverso al de creación. Las cuentas y recibos quedan en `gestion_cash`: sus snapshots no dependen del catálogo (ESP-03 §3, §5) y el período y el servicio nuevos de cada corrida evitan colisiones (ESP-09 §8).",
+          "item": [
+            {
+              "name": "Eliminar servicio de puesto",
+              "description": "DELETE /api/servicios/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar servicio de puesto devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/servicios/{{servicioPuestoId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "servicios",
+                    "{{servicioPuestoId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Eliminar servicio de socio",
+              "description": "DELETE /api/servicios/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar servicio de socio devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/servicios/{{servicioSocioId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "servicios",
+                    "{{servicioSocioId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Eliminar banco",
+              "description": "DELETE /api/bancos/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar banco devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/bancos/{{bancoId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "bancos",
+                    "{{bancoId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Eliminar puesto",
+              "description": "DELETE /api/puestos/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar puesto devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/puestos/{{puestoId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "puestos",
+                    "{{puestoId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Eliminar puesto sin socio",
+              "description": "DELETE /api/puestos/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar puesto sin socio devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/puestos/{{puestoVacioId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "puestos",
+                    "{{puestoVacioId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Eliminar socio",
+              "description": "DELETE /api/socios/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar socio devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/socios/{{socioId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "socios",
+                    "{{socioId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Eliminar giro",
+              "description": "DELETE /api/giros/{id} devuelve 204.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Eliminar giro devuelve 204', () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/giros/{{giroId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "giros",
+                    "{{giroId}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 · Recibos",
+      "description": "Tres operaciones de recibos (ESP-04 §4.4, ESP-09 §4.4): consulta por fecha, consulta por id e ingreso externo. Reutiliza los recibos emitidos en «03 · Caja».",
+      "item": [
+        {
+          "name": "Recibos por fecha",
+          "description": "GET /api/recibos?fecha= devuelve los recibos del día sin filtrar por tipo.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recibos por fecha devuelve 200', () => pm.response.to.have.status(200));",
+                  "const recibos = pm.response.json();",
+                  "pm.test('Es un array que contiene el recibo del pago', () => {",
+                  "  pm.expect(recibos).to.be.an('array');",
+                  "  pm.expect(recibos.some(r => String(r.id) === String(pm.collectionVariables.get('reciboId')))).to.eql(true);",
+                  "});",
+                  "pm.test('Cada recibo trae cuentaCobrar y usuario anidados', () => {",
+                  "  recibos.forEach(r => {",
+                  "    pm.expect(r).to.have.property('cuentaCobrar');",
+                  "    pm.expect(r).to.have.property('usuario');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos?fecha={{today}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "{{today}}",
+                  "description": "Fecha de emisión (ESP-04 §4.4)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recibos por fecha y tipo BANCARIO",
+          "description": "GET /api/recibos?fecha=&tipo=BANCARIO filtra por tipo y el banco llega anidado.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recibos bancarios devuelve 200', () => pm.response.to.have.status(200));",
+                  "const recibos = pm.response.json();",
+                  "const propio = recibos.find(r => String(r.id) === String(pm.collectionVariables.get('reciboBancarioId')));",
+                  "pm.test('Contiene el recibo del canje', () => pm.expect(propio).to.not.be.undefined);",
+                  "pm.test('El filtro solo devuelve recibos bancarios', () => {",
+                  "  recibos.forEach(r => pm.expect(r.tipo).to.eql('BANCARIO'));",
+                  "});",
+                  "pm.test('El recibo del canje trae el banco anidado', () => {",
+                  "  pm.expect(propio.banco).to.not.be.null;",
+                  "  pm.expect(propio.banco.nombre).to.eql('Banco PM Caja');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos?fecha={{today}}&tipo=BANCARIO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "{{today}}",
+                  "description": "Fecha de emisión"
+                },
+                {
+                  "key": "tipo",
+                  "value": "BANCARIO",
+                  "description": "INGRESO | INGRESO_EXTERNO | BANCARIO"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recibo por id",
+          "description": "GET /api/recibos/{id} devuelve el recibo del pago con `cuentaCobrar`, `servicio` y `usuario`.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recibo por id devuelve 200', () => pm.response.to.have.status(200));",
+                  "const recibo = pm.response.json();",
+                  "pm.test('Conserva cuentaCobrar con servicio y usuario (ESP-09 4.4)', () => {",
+                  "  pm.expect(recibo.cuentaCobrar).to.not.be.null;",
+                  "  pm.expect(recibo.cuentaCobrar.servicio).to.not.be.null;",
+                  "  pm.expect(recibo.usuario).to.not.be.null;",
+                  "  pm.expect(recibo.usuario.usuario).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('El recibo de pago no tiene banco ni depositante', () => {",
+                  "  pm.expect(recibo.tipo).to.eql('INGRESO');",
+                  "  pm.expect(recibo.banco).to.be.null;",
+                  "  pm.expect(recibo.depositante).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/{{reciboId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "{{reciboId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recibo bancario por id",
+          "description": "GET /api/recibos/{id} del canje: `banco` no nulo y cuenta de socio.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recibo bancario por id devuelve 200', () => pm.response.to.have.status(200));",
+                  "const recibo = pm.response.json();",
+                  "pm.test('Trae el snapshot del banco', () => {",
+                  "  pm.expect(recibo.banco).to.not.be.null;",
+                  "  pm.expect(recibo.banco.cci).to.eql('PMC000000000000000001');",
+                  "});",
+                  "pm.test('La cuenta asociada conserva el socio', () => {",
+                  "  pm.expect(recibo.cuentaCobrar.socio).to.not.be.null;",
+                  "  pm.expect(recibo.cuentaCobrar.socio.codigo).to.eql('SOC-PM-CAJA');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/{{reciboBancarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "{{reciboBancarioId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar ingreso externo",
+          "description": "POST /api/recibos/externos guarda `reciboExternoId`; el usuario sale del token.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Ingreso externo devuelve 201', () => pm.response.to.have.status(201));",
+                  "let recibo = {};",
+                  "try { recibo = pm.response.json(); } catch (e) { recibo = {}; }",
+                  "if (recibo.id) {",
+                  "  pm.collectionVariables.set('reciboExternoId', recibo.id);",
+                  "  // El entorno declara la variable vacia y tiene prioridad: se sincroniza.",
+                  "  if (pm.environment.name) {",
+                  "    pm.environment.set('reciboExternoId', recibo.id);",
+                  "  }",
+                  "}",
+                  "pm.test('Trae depositante, categoria y concepto', () => {",
+                  "  pm.expect(recibo.tipo).to.eql('INGRESO_EXTERNO');",
+                  "  pm.expect(recibo.depositante).to.eql('Depositante PM');",
+                  "  pm.expect(recibo.categoria).to.eql('Otros');",
+                  "  pm.expect(recibo.concepto).to.eql('Ingreso externo de prueba');",
+                  "});",
+                  "pm.test('No se asocia a cuenta ni a banco', () => {",
+                  "  pm.expect(recibo.cuentaCobrar).to.be.null;",
+                  "  pm.expect(recibo.banco).to.be.null;",
+                  "});",
+                  "pm.test('El usuario del recibo sale del token', () => {",
+                  "  pm.expect(recibo.usuario.nombres).to.be.a('string').and.not.empty;",
+                  "  pm.expect(recibo.usuario.apellidos).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/externos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "externos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"depositante\": \"Depositante PM\",\n  \"categoria\": \"Otros\",\n  \"concepto\": \"Ingreso externo de prueba\",\n  \"monto\": 25.5\n}"
+            }
+          }
+        },
+        {
+          "name": "Ingreso externo por id",
+          "description": "GET /api/recibos/{id} del ingreso externo: depositante, categoría y concepto.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recibo externo por id devuelve 200', () => pm.response.to.have.status(200));",
+                  "const recibo = pm.response.json();",
+                  "pm.test('Conserva depositante, categoria y concepto', () => {",
+                  "  pm.expect(recibo.depositante).to.eql('Depositante PM');",
+                  "  pm.expect(recibo.categoria).to.eql('Otros');",
+                  "  pm.expect(recibo.concepto).to.eql('Ingreso externo de prueba');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/{{reciboExternoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "{{reciboExternoId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recibo inexistente devuelve 404",
+          "description": "GET /api/recibos/999999999 devuelve 404 con la forma de error de ESP-04 §6.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recibo inexistente devuelve 404', () => pm.response.to.have.status(404));",
+                  "pm.test('El cuerpo usa la forma de error de ESP-04 6', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('timestamp');",
+                  "  pm.expect(body.status).to.eql(404);",
+                  "  pm.expect(body.message).to.eql('Recibo no encontrado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "999999999"
+              ]
+            }
+          }
         }
       ]
     }
