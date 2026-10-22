@@ -10,10 +10,24 @@ import java.util.List;
  * Proyección de cuenta por cobrar (ESP-04 §5.4). Los anidamientos se construyen
  * exclusivamente desde los snapshots: nunca se consulta catálogo al leer.
  *
- * <p>El esquema no guarda el id del socio ni el id del giro del puesto, así que
- * esos dos identificadores se serializan como {@code null} dentro de
- * {@code puesto.socio} y {@code puesto.giro}. Los nombres de campo se conservan
- * y los {@code null} no se omiten (ESP-04 §7.5).</p>
+ * <p><b>Desviación conocida (CA-02 de PLAN-04).</b> El esquema de
+ * {@code gestion_cash} guarda del puesto {@code puesto_numero},
+ * {@code puesto_nombre_inquilino}, {@code puesto_giro_nombre},
+ * {@code puesto_socio_codigo}, {@code puesto_socio_nombres} y
+ * {@code puesto_socio_apellidos}, pero no los identificadores del socio ni del
+ * giro del puesto: ESP-03 §4.3 no los incluye y la migración
+ * {@code V1__creacion_tesoreria.sql} es inmutable. Por eso
+ * {@code puesto.socio.id} y {@code puesto.giro.id} se serializan como
+ * {@code null}.</p>
+ *
+ * <p>No se resuelven al leer: consultar catálogo en un listado rompería
+ * ESP-03 §5 y §8 (el histórico debe verse con catálogo caído) y deducirlos del
+ * nombre o del código sería adivinar. Los nombres de campo se conservan y los
+ * {@code null} no se omiten (ESP-04 §7.5), así que la forma de ESP-04 §5.4 se
+ * mantiene intacta salvo esos dos valores. Cerrar la brecha exige una migración
+ * nueva con {@code puesto_socio_id} y {@code puesto_giro_id} y rellenarlas en
+ * el alta; queda fuera de este plan porque prohíbe tocar
+ * {@code database/flyway/cash/**}.</p>
  */
 public final class CuentaCobrarMapper {
 
