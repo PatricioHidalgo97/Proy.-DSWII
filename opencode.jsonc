@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Este archivo solo configura OpenCode. Los agentes viven en .opencode/agents/*.md
+  // y el modelo de cada uno se declara en el frontmatter de su propio archivo.
+  //
+  // Agentes definidos:
+  //   .opencode/agents/orquestador.md            (primary)
+  //   .opencode/agents/ejecutor.md               (subagent)
+  //   .opencode/agents/planificador-arreglos.md   (subagent)
+
+  // Un subagente no puede lanzar otro subagente con el valor por defecto (1).
+  // Se deja en 1 a propósito: el orquestador es el único que delega.
+  "experimental": {
+    "subagent_depth": 1
+  }
+}
