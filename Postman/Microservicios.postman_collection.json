@@ -1,0 +1,3754 @@
+{
+  "info": {
+    "name": "Sistema de Gestión — Microservicios (vía API Gateway)",
+    "description": "Colección para probar las 52 operaciones de la arquitectura de microservicios a través del API Gateway (puerto 9101). Cubre identidad, catálogos (socios, giros, puestos, servicios, bancos), caja (cuentas, recibos, egresos) y reportes, incluyendo rutas de seguridad, errores y limpieza. NO apunta al monolito (puerto 9090).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9101/api"
+    },
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:9101"
+    },
+    {
+      "key": "gatewayHealthUrl",
+      "value": "http://localhost:9101/actuator/health"
+    },
+    {
+      "key": "identityHealthUrl",
+      "value": "http://localhost:9102/actuator/health"
+    },
+    {
+      "key": "catalogHealthUrl",
+      "value": "http://localhost:9103/actuator/health"
+    },
+    {
+      "key": "cashHealthUrl",
+      "value": "http://localhost:9104/actuator/health"
+    },
+    {
+      "key": "adminUsuario",
+      "value": "admin"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin123*"
+    },
+    {
+      "key": "operadorUsuario",
+      "value": "caja"
+    },
+    {
+      "key": "operadorPassword",
+      "value": "Caja123*"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tokenOperador",
+      "value": ""
+    },
+    {
+      "key": "socioId",
+      "value": ""
+    },
+    {
+      "key": "socioCodigo",
+      "value": ""
+    },
+    {
+      "key": "giroId",
+      "value": ""
+    },
+    {
+      "key": "giroNombre",
+      "value": ""
+    },
+    {
+      "key": "puestoId",
+      "value": ""
+    },
+    {
+      "key": "puestoNumero",
+      "value": ""
+    },
+    {
+      "key": "puestoVacioId",
+      "value": ""
+    },
+    {
+      "key": "servicioPuestoId",
+      "value": ""
+    },
+    {
+      "key": "servicioPuestoNombre",
+      "value": ""
+    },
+    {
+      "key": "servicioSocioId",
+      "value": ""
+    },
+    {
+      "key": "servicioConsumoId",
+      "value": ""
+    },
+    {
+      "key": "bancoId",
+      "value": ""
+    },
+    {
+      "key": "bancoNumeroCuenta",
+      "value": ""
+    },
+    {
+      "key": "bancoCci",
+      "value": ""
+    },
+    {
+      "key": "cuentaPuestoId",
+      "value": ""
+    },
+    {
+      "key": "cuentaSocioId",
+      "value": ""
+    },
+    {
+      "key": "cuentaGenAId",
+      "value": ""
+    },
+    {
+      "key": "cuentaGenBId",
+      "value": ""
+    },
+    {
+      "key": "cuentaSocioGenId",
+      "value": ""
+    },
+    {
+      "key": "cuentaLoteAId",
+      "value": ""
+    },
+    {
+      "key": "cuentaLoteBId",
+      "value": ""
+    },
+    {
+      "key": "reciboId",
+      "value": ""
+    },
+    {
+      "key": "reciboBancarioId",
+      "value": ""
+    },
+    {
+      "key": "reciboExternoId",
+      "value": ""
+    },
+    {
+      "key": "egresoId",
+      "value": ""
+    },
+    {
+      "key": "egresoImportadoId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Salud y diagnóstico",
+      "item": [
+        {
+          "name": "Health del gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/actuator/health",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Estado del API Gateway",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Servicio UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health de identity-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityHealthUrl}}/actuator/health",
+              "host": [
+                "{{identityHealthUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Estado de identity-service (puerto 9102)",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Servicio UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health de catalog-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{catalogHealthUrl}}/actuator/health",
+              "host": [
+                "{{catalogHealthUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Servicio UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health de cash-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{cashHealthUrl}}/actuator/health",
+              "host": [
+                "{{cashHealthUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Servicio UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rutas activas del gateway (/actuator/gateway/routes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/actuator/gateway/routes",
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "gateway",
+                "routes"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const rutas = pm.response.json();",
+                  "pm.test('Diez rutas del gateway', () => pm.expect(rutas).to.have.lengthOf(10));",
+                  "pm.test('Ids de ruta esperadas', () => {",
+                  "  const ids = rutas.map(r => r.route_id);",
+                  "  ['identity','socios','giros','puestos','servicios','bancos','cuentas','recibos','egresos','reportes'].forEach(id => pm.expect(ids).to.include(id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Estado de cada proceso y las 10 rutas declaradas en el gateway."
+    },
+    {
+      "name": "01 · Autenticación",
+      "item": [
+        {
+          "name": "Login administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"{{adminUsuario}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve token JWT', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('token', body.token);",
+                  "pm.test('Rol ADMIN', () => pm.expect(body.rol).to.eql('ADMIN'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login operador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"{{operadorUsuario}}\",\n  \"password\": \"{{operadorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve token JWT', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('token', body.token);",
+                  "pm.test('Rol OPERADOR', () => pm.expect(body.rol).to.eql('OPERADOR'));",
+                  "pm.collectionVariables.set('tokenOperador', body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Usuario actual (/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Usuario y rol', () => { pm.expect(body.usuario).to.eql('admin'); pm.expect(body.rol).to.eql('ADMIN'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login inválido devuelve 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"noexiste\",\n  \"password\": \"incorrecto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Login admin y operador (guardan {{token}} y {{tokenOperador}}), usuario actual y credenciales inválidas."
+    },
+    {
+      "name": "02 · Catálogos",
+      "item": [
+        {
+          "name": "Crear socio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SOC-{{$timestamp}}\",\n  \"nombres\": \"Socio\",\n  \"apellidos\": \"Postman {{$timestamp}}\",\n  \"accion\": \"A-{{$timestamp}}\",\n  \"etapa\": 1,\n  \"fechaNacimiento\": \"1990-05-20\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear socio creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('socioId', body.id);",
+                  "pm.collectionVariables.set('socioCodigo', body.socioCodigo);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar socios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));",
+                  "pm.test('Contiene el socio creado', () => pm.expect(lista.some(s => s.id === pm.collectionVariables.get('socioId'))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener socio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios/{{socioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios",
+                "{{socioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Es el socio correcto', () => pm.expect(body.id).to.eql(parseInt(pm.collectionVariables.get('socioId'))));",
+                  "pm.test('Tiene código', () => pm.expect(body.codigo).to.eql(pm.collectionVariables.get('socioCodigo')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar socio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/socios/{{socioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios",
+                "{{socioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{socioCodigo}}\",\n  \"nombres\": \"Socio Actualizado\",\n  \"apellidos\": \"Postman {{$timestamp}}\",\n  \"accion\": \"A-{{$timestamp}}\",\n  \"etapa\": 2,\n  \"fechaNacimiento\": \"1990-05-20\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Nombres actualizados', () => pm.expect(body.nombres).to.eql('Socio Actualizado'));",
+                  "pm.test('Etapa actualizada', () => pm.expect(body.etapa).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Socio duplicado devuelve 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{socioCodigo}}\",\n  \"nombres\": \"Duplicado\",\n  \"apellidos\": \"Postman\",\n  \"accion\": \"A-{{$timestamp}}\",\n  \"etapa\": 1,\n  \"fechaNacimiento\": \"1990-05-20\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mensaje de conflicto', () => pm.expect(body.message).to.include('Ya existe'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear giro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/giros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "giros"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Giro Postman {{$timestamp}}\",\n  \"descripcion\": \"Giro creado por Postman\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear giro creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('giroId', body.id);",
+                  "pm.collectionVariables.set('giroNombre', body.giroNombre);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar giros",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/giros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "giros"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener giro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/giros/{{giroId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "giros",
+                "{{giroId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Es el giro correcto', () => pm.expect(body.id).to.eql(parseInt(pm.collectionVariables.get('giroId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar giro",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/giros/{{giroId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "giros",
+                "{{giroId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{giroNombre}}\",\n  \"descripcion\": \"Giro actualizado por Postman\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Descripción actualizada', () => pm.expect(body.descripcion).to.eql('Giro actualizado por Postman'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Giro duplicado devuelve 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/giros",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "giros"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{giroNombre}}\",\n  \"descripcion\": \"Duplicado\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json(); pm.test('Mensaje de conflicto', () => pm.expect(body.message).to.include('Ya existe'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear puesto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"P-{{$timestamp}}\",\n  \"nombreInquilino\": \"Inquilino Postman\",\n  \"fechaInicio\": \"2024-01-01\",\n  \"fechaFin\": null,\n  \"socioId\": \"{{socioId}}\",\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear puesto creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('puestoId', body.id);",
+                  "pm.collectionVariables.set('puestoNumero', body.puestoNumero);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear puesto sin socio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"PV-{{$timestamp}}\",\n  \"nombreInquilino\": \"Puesto Vacante\",\n  \"fechaInicio\": \"2024-03-01\",\n  \"fechaFin\": null,\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear puesto sin socio creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('puestoVacioId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar puestos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json(); pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener puesto (con socio y giro anidados)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/puestos/{{puestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos",
+                "{{puestoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Puesto correcto', () => pm.expect(body.id).to.eql(parseInt(pm.collectionVariables.get('puestoId'))));",
+                  "pm.test('Socio anidado', () => pm.expect(body.socio).to.not.be.undefined && pm.expect(body.socio.id).to.eql(parseInt(pm.collectionVariables.get('socioId'))));",
+                  "pm.test('Giro anidado', () => pm.expect(body.giro).to.not.be.undefined && pm.expect(body.giro.id).to.eql(parseInt(pm.collectionVariables.get('giroId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar puesto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/puestos/{{puestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos",
+                "{{puestoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"{{puestoNumero}}\",\n  \"nombreInquilino\": \"Inquilino Actualizado\",\n  \"fechaInicio\": \"2024-01-01\",\n  \"fechaFin\": null,\n  \"socioId\": \"{{socioId}}\",\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Inquilino actualizado', () => pm.expect(body.nombreInquilino).to.eql('Inquilino Actualizado'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Puesto duplicado devuelve 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"{{puestoNumero}}\",\n  \"nombreInquilino\": \"Duplicado\",\n  \"fechaInicio\": \"2024-01-01\",\n  \"fechaFin\": null,\n  \"socioId\": \"{{socioId}}\",\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json(); pm.test('Mensaje de conflicto', () => pm.expect(body.message).to.include('Ya existe'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Puesto con fecha de fin inválida devuelve 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": \"PF-{{$timestamp}}\",\n  \"nombreInquilino\": \"Fecha Invalida\",\n  \"fechaInicio\": \"2025-01-01\",\n  \"fechaFin\": \"2024-01-01\",\n  \"giroId\": \"{{giroId}}\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mensaje de negocio', () => pm.expect(body.message).to.include('fecha de fin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear servicio de puesto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio Puesto Postman {{$timestamp}}\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 80.0,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"PUESTO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear servicio de puesto creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('servicioPuestoId', body.id);",
+                  "pm.collectionVariables.set('servicioPuestoNombre', body.servicioPuestoNombre);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear servicio de socio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio Socio Postman {{$timestamp}}\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 50.0,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"SOCIO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear servicio de socio creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('servicioSocioId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear servicio por consumo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio Consumo Postman {{$timestamp}}\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 3.5,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"PUESTO\",\n  \"dependeConsumo\": true,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear servicio por consumo creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('servicioConsumoId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar servicios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json(); pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener servicio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicios/{{servicioPuestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios",
+                "{{servicioPuestoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Es el servicio correcto', () => pm.expect(body.id).to.eql(parseInt(pm.collectionVariables.get('servicioPuestoId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar servicio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicios/{{servicioPuestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios",
+                "{{servicioPuestoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{servicioPuestoNombre}}\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 85.0,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"PUESTO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Costo actualizado', () => pm.expect(Number(body.costo)).to.eql(85));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Servicio duplicado devuelve 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{servicioPuestoNombre}}\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 80.0,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"PUESTO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json(); pm.test('Mensaje de conflicto', () => pm.expect(body.message).to.include('Ya existe'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Servicio con costo inválido devuelve 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio Costo Invalido {{$timestamp}}\",\n  \"recurrencia\": \"MENSUAL\",\n  \"costo\": 0,\n  \"moneda\": \"PEN\",\n  \"cargoA\": \"PUESTO\",\n  \"dependeConsumo\": false,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Error por campo costo', () => pm.expect(body.errors).to.have.property('costo'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear banco",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Banco Postman {{$timestamp}}\",\n  \"numeroCuenta\": \"PM-{{$timestamp}}\",\n  \"cci\": \"CCI-{{$timestamp}}\",\n  \"moneda\": \"PEN\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el Crear banco creado', () => { pm.expect(body.id).to.be.a('number').and.above(0); });",
+                  "pm.collectionVariables.set('bancoId', body.id);",
+                  "pm.collectionVariables.set('bancoNumeroCuenta', body.bancoNumeroCuenta);",
+                  "pm.collectionVariables.set('bancoCci', body.cci);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar bancos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancos"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json(); pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener banco",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bancos/{{bancoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancos",
+                "{{bancoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Es el banco correcto', () => pm.expect(body.id).to.eql(parseInt(pm.collectionVariables.get('bancoId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar banco",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bancos/{{bancoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancos",
+                "{{bancoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{bancoNumeroCuenta}} Banco Actualizado\",\n  \"numeroCuenta\": \"{{bancoNumeroCuenta}}\",\n  \"cci\": \"{{bancoCci}}\",\n  \"moneda\": \"PEN\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Nombre actualizado', () => pm.expect(body.nombre).to.include('Actualizado'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Banco con CCI duplicado devuelve 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Banco Duplicado\",\n  \"numeroCuenta\": \"PM2-{{$timestamp}}\",\n  \"cci\": \"{{bancoCci}}\",\n  \"moneda\": \"PEN\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json(); pm.test('Mensaje de conflicto', () => pm.expect(body.message).to.include('Ya existe'));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "CRUD de socios, giros, puestos, servicios y bancos, con casos de duplicado (409) y reglas de negocio (400)."
+    },
+    {
+      "name": "03 · Caja — Cuentas",
+      "item": [
+        {
+          "name": "Crear cuenta por puesto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{period}}\",\n  \"monto\": 80.0,\n  \"puestoId\": \"{{puestoId}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Cuenta creada con estado PENDIENTE', () => { pm.expect(body.id).to.be.a('number').and.above(0); pm.expect(body.estado).to.eql('PENDIENTE'); });",
+                  "pm.test('Puesto anidado no nulo', () => pm.expect(body.puesto).to.not.be.null && pm.expect(body.puesto.id).to.eql(parseInt(pm.collectionVariables.get('puestoId'))));",
+                  "pm.test('Socio top-level nulo', () => pm.expect(body.socio).to.be.null);",
+                  "pm.collectionVariables.set('cuentaPuestoId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear cuenta por socio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{period}}\",\n  \"monto\": 50.0,\n  \"socioId\": \"{{socioId}}\",\n  \"servicioId\": \"{{servicioSocioId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Cuenta creada', () => { pm.expect(body.id).to.be.a('number').and.above(0); pm.expect(body.estado).to.eql('PENDIENTE'); });",
+                  "pm.test('Socio anidado', () => pm.expect(body.socio).to.not.be.null && pm.expect(body.socio.id).to.eql(parseInt(pm.collectionVariables.get('socioId'))));",
+                  "pm.collectionVariables.set('cuentaSocioId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cuenta duplicada devuelve 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{period}}\",\n  \"monto\": 80.0,\n  \"puestoId\": \"{{puestoId}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json(); pm.test('Mensaje de negocio', () => pm.expect(body.message).to.include('ya existe'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generar cuentas por puestos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/generar/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "generar",
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{periodGen}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\",\n  \"puestoIds\": [\n    \"{{puestoId}}\",\n    \"{{puestoVacioId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const bodies = pm.response.json();",
+                  "pm.test('Devuelve un array', () => pm.expect(bodies).to.be.an('array').with.lengthOf(2));",
+                  "pm.collectionVariables.set('cuentaGenAId', bodies[0].id);",
+                  "pm.collectionVariables.set('cuentaGenBId', bodies[1].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generar cuentas por socios",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/generar/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "generar",
+                "socios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{periodGen}}\",\n  \"servicioId\": \"{{servicioSocioId}}\",\n  \"socioIds\": [\n    \"{{socioId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const bodies = pm.response.json();",
+                  "pm.test('Devuelve al menos una cuenta', () => pm.expect(bodies).to.be.an('array').with.lengthOf.above(0));",
+                  "pm.collectionVariables.set('cuentaSocioGenId', bodies[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generar duplicado devuelve 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/generar/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "generar",
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{periodGen}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\",\n  \"puestoIds\": [\n    \"{{puestoId}}\",\n    \"{{puestoVacioId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json(); pm.test('Mensaje de negocio', () => pm.expect(body.message).to.include('ya fueron generadas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar cuentas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));",
+                  "pm.test('Contrato anidado de cuenta', () => {",
+                  "  const c = lista.find(x => String(x.id) === String(pm.collectionVariables.get('cuentaPuestoId')));",
+                  "  pm.expect(c).to.not.be.undefined;",
+                  "  pm.expect(c.servicio).to.have.property('nombre');",
+                  "  pm.expect(c).to.have.property('lecturaInicial');",
+                  "  pm.expect(c).to.have.property('costoUnitario');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cuentas por puesto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/puesto/{{puestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "puesto",
+                "{{puestoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cuentas por socio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/socio/{{socioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "socio",
+                "{{socioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json();",
+                  "pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exonerar cuenta",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/{{cuentaGenAId}}/exonerar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "{{cuentaGenAId}}",
+                "exonerar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Estado EXONERADA', () => pm.expect(body.estado).to.eql('EXONERADA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exonerar cuentas en lote",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/exonerar-lote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "exonerar-lote"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cuentaIds\": [\n    \"{{cuentaGenBId}}\",\n    \"{{cuentaSocioGenId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const bodies = pm.response.json();",
+                  "pm.test('Dos cuentas exoneradas', () => pm.expect(bodies).to.be.an('array').with.lengthOf(2));",
+                  "pm.test('Todas EXONERADA', () => bodies.every(b => pm.expect(b.estado).to.eql('EXONERADA')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exoneración en lote vacía devuelve 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/exonerar-lote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "exonerar-lote"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cuentaIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json(); pm.test('Mensaje de lote vacío', () => pm.expect(body.message).to.include('al menos una cuenta'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagar cuenta",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/{{cuentaPuestoId}}/pagar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "{{cuentaPuestoId}}",
+                "pagar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Recibo emitido con correlativo REC-', () => { pm.expect(body.correlativo).to.match(/^REC-/); pm.expect(body.tipo).to.eql('INGRESO'); });",
+                  "pm.collectionVariables.set('reciboId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagar dos veces devuelve 400",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/{{cuentaPuestoId}}/pagar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "{{cuentaPuestoId}}",
+                "pagar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json(); pm.test('Mensaje de negocio', () => pm.expect(body.message).to.include('ya fue pagada'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generar cuentas para pago en lote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/generar/puestos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "generar",
+                "puestos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": \"{{periodPago}}\",\n  \"servicioId\": \"{{servicioPuestoId}}\",\n  \"puestoIds\": [\n    \"{{puestoId}}\",\n    \"{{puestoVacioId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const bodies = pm.response.json();",
+                  "pm.test('Dos cuentas creadas', () => pm.expect(bodies).to.be.an('array').with.lengthOf(2));",
+                  "pm.collectionVariables.set('cuentaLoteAId', bodies[0].id);",
+                  "pm.collectionVariables.set('cuentaLoteBId', bodies[1].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagar en lote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/pagar-lote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "pagar-lote"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cuentaIds\": [\n    \"{{cuentaLoteAId}}\",\n    \"{{cuentaLoteBId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const bodies = pm.response.json();",
+                  "pm.test('Un recibo por cuenta', () => pm.expect(bodies).to.be.an('array').with.lengthOf(2));",
+                  "pm.test('Correlativos REC-', () => bodies.every(b => pm.expect(b.correlativo).to.match(/^REC-/)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Canjear cuenta de socio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/canjear",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "canjear"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cuentaId\": \"{{cuentaSocioId}}\",\n  \"bancoId\": \"{{bancoId}}\",\n  \"fechaDeposito\": \"{{today}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Recibo bancario con banco anidado', () => { pm.expect(body.banco).to.not.be.null; pm.expect(body.tipo).to.eql('BANCARIO'); });",
+                  "pm.collectionVariables.set('reciboBancarioId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagar cuenta inexistente devuelve 404",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cuentas/999999999/pagar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cuentas",
+                "999999999",
+                "pagar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json(); pm.test('Mensaje 404', () => pm.expect(body.message).to.include('no encontrada'));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Cuentas individuales, generación masiva, consultas, exoneración, pagos y canje bancario."
+    },
+    {
+      "name": "04 · Recibos",
+      "item": [
+        {
+          "name": "Recibos por fecha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/recibos?fecha={{today}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "{{today}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json(); pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recibos por fecha y tipo BANCARIO",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/recibos?fecha={{today}}&tipo=BANCARIO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "{{today}}"
+                },
+                {
+                  "key": "tipo",
+                  "value": "BANCARIO"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json(); pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recibo por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/{{reciboId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "{{reciboId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Cuenta cobrar anidada', () => pm.expect(body.cuentaCobrar).to.not.be.null && pm.expect(body.cuentaCobrar.id).to.eql(parseInt(pm.collectionVariables.get('cuentaPuestoId'))));",
+                  "pm.test('Usuario anidado', () => pm.expect(body.usuario).to.not.be.null && pm.expect(body.usuario.id).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recibo bancario por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/{{reciboBancarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "{{reciboBancarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Banco anidado no nulo', () => pm.expect(body.banco).to.not.be.null && pm.expect(body.banco.id).to.eql(parseInt(pm.collectionVariables.get('bancoId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar ingreso externo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/externos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "externos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"depositante\": \"Depositante Postman {{$timestamp}}\",\n  \"categoria\": \"Caja\",\n  \"concepto\": \"Prueba Postman\",\n  \"monto\": 120.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Campos del ingreso externo', () => { pm.expect(body.depositante).to.include('Postman'); pm.expect(body.categoria).to.eql('Caja'); pm.expect(body.concepto).to.eql('Prueba Postman'); });",
+                  "pm.collectionVariables.set('reciboExternoId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ingreso externo por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/{{reciboExternoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "{{reciboExternoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Tipo INGRESO_EXTERNO', () => pm.expect(body.tipo).to.eql('INGRESO_EXTERNO'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recibo inexistente devuelve 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/recibos/999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "recibos",
+                "999999999"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json(); pm.test('Mensaje 404', () => pm.expect(body.message).to.include('no encontrado'));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Consulta de recibos por fecha, por id y registro de ingresos externos."
+    },
+    {
+      "name": "05 · Egresos",
+      "item": [
+        {
+          "name": "Crear egreso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/egresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoDocumento\": \"FACTURA\",\n  \"numeroDocumento\": \"F-PM-{{$timestamp}}\",\n  \"proveedor\": \"Proveedor Postman\",\n  \"fecha\": \"{{today}}\",\n  \"subtotal\": 100.0,\n  \"impuesto\": 18.0,\n  \"total\": 118.0,\n  \"motivo\": \"Prueba Postman\",\n  \"documentoAsociado\": \"OC-PM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Comprobante correlativo EGR-', () => pm.expect(body.comprobante).to.match(/^EGR-/));",
+                  "pm.test('Estado REGISTRADO', () => pm.expect(body.estado).to.eql('REGISTRADO'));",
+                  "pm.collectionVariables.set('egresoId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Importar plantilla CSV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/importar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "importar"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "fixtures/egresos-demo.csv"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const importados = pm.response.json();",
+                  "pm.test('Importa al menos un egreso', () => pm.expect(importados).to.be.an('array').with.lengthOf.above(0));",
+                  "pm.test('Comprobantes EGR-', () => importados.every(e => pm.expect(e.comprobante).to.match(/^EGR-/)));",
+                  "pm.collectionVariables.set('egresoImportadoId', importados[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Egresos del mes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos?periodo={{period}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "{{period}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const lista = pm.response.json(); pm.test('Es un array', () => pm.expect(lista).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Egreso por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/{{egresoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "{{egresoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Usuario anidado', () => pm.expect(body.usuario).to.not.be.null && pm.expect(body.usuario.id).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Procesar egreso",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/{{egresoId}}/procesar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "{{egresoId}}",
+                "procesar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json(); pm.test('Estado PROCESADO', () => pm.expect(body.estado).to.eql('PROCESADO'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anular con operador devuelve 403",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/{{egresoImportadoId}}/anular",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "{{egresoImportadoId}}",
+                "anular"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json(); pm.test('Mensaje 403', () => pm.expect(body.message).to.include('permisos'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anular con administrador",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/{{egresoImportadoId}}/anular",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "{{egresoImportadoId}}",
+                "anular"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json(); pm.test('Estado ANULADO', () => pm.expect(body.estado).to.eql('ANULADO'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anular dos veces devuelve 400",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/{{egresoImportadoId}}/anular",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "{{egresoImportadoId}}",
+                "anular"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json(); pm.test('Mensaje 400', () => pm.expect(body.message).to.include('ya está anulado'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Procesar un egreso anulado devuelve 400",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/{{egresoImportadoId}}/procesar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "{{egresoImportadoId}}",
+                "procesar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json(); pm.test('Mensaje 400', () => pm.expect(body.message).to.include('anulado'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Egreso inexistente devuelve 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/egresos/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "egresos",
+                "999999"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json(); pm.test('Mensaje 404', () => pm.expect(body.message).to.include('no encontrado'));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Egreso, importación CSV, procesamiento y anulación (operador 403 / admin 200)."
+    },
+    {
+      "name": "06 · Reportes",
+      "item": [
+        {
+          "name": "Movimientos diarios (XLSX)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/movimientos-diarios?fecha={{today}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "movimientos-diarios"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "{{today}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type XLSX', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml'));",
+                  "pm.test('Content-Disposition attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Movimientos mensuales (XLSX)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/movimientos-mensuales?periodo={{period}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "movimientos-mensuales"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "{{period}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type XLSX', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml'));",
+                  "pm.test('Content-Disposition attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte de socios (XLSX)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "socios"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type XLSX', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml'));",
+                  "pm.test('Content-Disposition attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte de egresos (XLSX)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/egresos?periodo={{period}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "egresos"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "{{period}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type XLSX', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml'));",
+                  "pm.test('Content-Disposition attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte de bancos (XLSX)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reportes",
+                "bancos"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type XLSX', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('spreadsheetml'));",
+                  "pm.test('Content-Disposition attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Cinco reportes XLSX con Content-Type y Content-Disposition de descarga."
+    },
+    {
+      "name": "07 · Seguridad y errores",
+      "item": [
+        {
+          "name": "Sin token devuelve 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json(); pm.test('Mensaje 401', () => pm.expect(body.status).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Token inválido devuelve 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "token-invalido",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json(); pm.test('Mensaje 401', () => pm.expect(body.status).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Operador creando socio devuelve 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SOC-OP-{{$timestamp}}\",\n  \"nombres\": \"Operador\",\n  \"apellidos\": \"Intento\",\n  \"accion\": \"A-{{$timestamp}}\",\n  \"etapa\": 1,\n  \"fechaNacimiento\": \"1990-05-20\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json(); pm.test('Mensaje 403', () => pm.expect(body.message).to.include('permisos'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Operador eliminando socio devuelve 403",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios/{{socioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios",
+                "{{socioId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json(); pm.test('Mensaje 403', () => pm.expect(body.message).to.include('permisos'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prefijo no enrutado devuelve 404 del gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ruta-no-enrutada",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ruta-no-enrutada"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json(); pm.test('Cuerpo de error', () => pm.expect(body.status).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Payload inválido devuelve 400 con errors",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Tiene errors', () => pm.expect(body.errors).to.be.an('object'));",
+                  "pm.test('Error en campo codigo', () => pm.expect(body.errors).to.have.property('codigo'));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "401 sin token / token inválido, 403 operador sobre catálogos, 404 prefijo no enrutado y 400 de validación."
+    },
+    {
+      "name": "08 · Limpieza",
+      "item": [
+        {
+          "name": "Eliminar puesto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/puestos/{{puestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos",
+                "{{puestoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar puesto sin socio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/puestos/{{puestoVacioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "puestos",
+                "{{puestoVacioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar servicio de puesto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicios/{{servicioPuestoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios",
+                "{{servicioPuestoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar servicio de socio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicios/{{servicioSocioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios",
+                "{{servicioSocioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar servicio por consumo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/servicios/{{servicioConsumoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "servicios",
+                "{{servicioConsumoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar banco",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bancos/{{bancoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancos",
+                "{{bancoId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar socio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socios/{{socioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "socios",
+                "{{socioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar giro",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/giros/{{giroId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "giros",
+                "{{giroId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Elimina los catálogos creados para que la colección sea repetible sin generar duplicados."
+    }
+  ]
+}

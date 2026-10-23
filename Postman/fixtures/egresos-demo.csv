@@ -1,0 +1,3 @@
+tipoDocumento;numeroDocumento;proveedor;fecha;subtotal;impuesto;total;motivo;documentoAsociado
+FACTURA;F001-900;Proveedor Postman;2026-10-01;100.00;18.00;118.00;Utiles de oficina;OC-900
+BOLETA;B001-901;Servicios Generales;2026-10-01;50.00;0.00;50.00;Mantenimiento menor;
